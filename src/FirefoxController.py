@@ -1,4 +1,6 @@
 import threading
+import pathlib
+import json
 from selenium import webdriver
 from selenium.webdriver.firefox.service import Service
 
@@ -11,10 +13,18 @@ class FirefoxController():
         super().__init__()
         self.__driver: webdriver.Firefox = None
         self.__thread = threading.Thread(target=self.__process, args=())
+        self.__ip: str = ''
+        self.__port: int = 0
+        self.__webdriverPath: str = ''
+        self.__path: pathlib.Path = pathlib.Path(
+            str(pathlib.Path(__file__).parent.parent) + '/config/FirefoxController.json')
+        self.__config: dict = None
+        self.__readConfigFile()
+        self.__configureController()
 
     def __connect(self) -> None:
-        firefoxService = Service(executable_path='/home/ubuntu/webdrivers/geckodriver', port=3000, service_args=[
-                                 '--marionette-port', '2828', '--connect-existing'])
+        firefoxService = Service(executable_path=self.__webdriverPath, port=3000, service_args=[
+                                 '--marionette-port', self.__port, '--connect-existing'])
         while True:
             try:
                 self.__driver = webdriver.Firefox(service=firefoxService)
@@ -24,6 +34,16 @@ class FirefoxController():
                 Logger.warn(
                     f'Could not connect to Mozilla Firefox, retrying...')
                 continue
+
+    def __readConfigFile(self) -> None:
+        file = open(self.__path, mode='r', encoding='utf-8')
+        self.__config = json.load(file)
+        file.close()
+
+    def __configureController(self) -> None:
+        self.__ip = self.__config['ip']
+        self.__port = self.__config['port']
+        self.__webdriverPath = self.__config['webdriverPath']
 
     def __process(self) -> None:
         self.__connect()
