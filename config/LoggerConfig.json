@@ -1,0 +1,7 @@
+{
+    "format": "%(asctime)s %(levelname)s: %(message)s",
+    "level": "warning",
+    "terminal": true,
+    "file": false,
+    "filePath": ""
+}
