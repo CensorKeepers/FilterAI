@@ -3,5 +3,5 @@
     "level": "warning",
     "terminal": true,
     "file": false,
-    "filePath": ""
+    "filePath": "../app.log"
 }
