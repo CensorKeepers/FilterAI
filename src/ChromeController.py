@@ -48,8 +48,7 @@ class ChromeController():
 
     def __process(self) -> None:
         self.__connect()
-        Logger.warn('Closing the Chrome.')
-        self.__driver.quit()
+        self.__driver.get('https://www.google.com.tr')
 
     def start(self) -> None:
         self.__thread.start()

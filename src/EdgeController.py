@@ -17,7 +17,7 @@ class EdgeController():
         self.__port: int = 0
         self.__webdriverPath: str = ''
         self.__path: pathlib.Path = pathlib.Path(
-            str(pathlib.Path(__file__).parent.parent) + '/config/ChromeController.json')
+            str(pathlib.Path(__file__).parent.parent) + '/config/EdgeController.json')
         self.__config: dict = None
         self.__readConfigFile()
         self.__configureController()
@@ -48,8 +48,7 @@ class EdgeController():
 
     def __process(self) -> None:
         self.__connect()
-        Logger.warn('Closing the Edge.')
-        self.__driver.quit()
+        self.__driver.get('https://www.google.com.tr')
 
     def start(self) -> None:
         self.__thread.start()

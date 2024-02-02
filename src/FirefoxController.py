@@ -24,7 +24,7 @@ class FirefoxController():
 
     def __connect(self) -> None:
         firefoxService = Service(executable_path=self.__webdriverPath, port=3000, service_args=[
-                                 '--marionette-port', self.__port, '--connect-existing'])
+                                 '--marionette-port', str(self.__port), '--connect-existing'])
         while True:
             try:
                 self.__driver = webdriver.Firefox(service=firefoxService)
@@ -47,8 +47,7 @@ class FirefoxController():
 
     def __process(self) -> None:
         self.__connect()
-        Logger.warn('Closing the Firefox.')
-        self.__driver.quit()
+        self.__driver.get('https://www.google.com.tr')
 
     def start(self) -> None:
         self.__thread.start()
