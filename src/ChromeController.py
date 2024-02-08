@@ -3,9 +3,10 @@ import json
 import pathlib
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-
+from selenium.webdriver.chrome.service import Service
 from Logger import Logger
 
+from URLTracker import URLTracker
 
 class ChromeController():
 
@@ -49,6 +50,8 @@ class ChromeController():
     def __process(self) -> None:
         self.__connect()
         self.__driver.get('https://www.google.com.tr')
+        tracker = URLTracker(self.__driver)
+        tracker.track_new_tabs()
 
     def start(self) -> None:
         self.__thread.start()
