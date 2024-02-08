@@ -1,5 +1,5 @@
 {
     "ip": "127.0.0.1",
     "port": 9923,
-    "webdriverPath": "../webdrivers/chromedriver"
+    "webdriverPath": "../webdrivers/chromedriver-win64/chromedriver.exe"
 }
