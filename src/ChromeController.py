@@ -3,11 +3,12 @@ import json
 import pathlib
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-
+from selenium.webdriver.chrome.service import Service
 from Logger import Logger
 
 from time import sleep
 
+from URLTracker import URLTracker
 
 class ChromeController():
 
@@ -66,6 +67,8 @@ class ChromeController():
 
     def __handleNewTabs(self) -> None:
         while not self.__shouldTerminate:
+            tracker = URLTracker(self.__driver)
+            tracker.track_new_tabs()
             sleep(0.1)
 
     def __handleRefreshs(self) -> None:
