@@ -68,6 +68,8 @@ class FirefoxController():
 
     def __handleNewTabs(self) -> None:
         while not self.__shouldTerminate:
+            tracker = URLTracker(self.__driver)
+            tracker.track_new_tabs()
             sleep(0.1)
 
     def __handleRefreshs(self) -> None:
@@ -88,7 +90,3 @@ class FirefoxController():
     def shouldTerminate(self) -> None:
         self.__shouldTerminate = True
 
-
-
-        tracker = URLTracker(self.__driver)
-        tracker.track_new_tabs()
