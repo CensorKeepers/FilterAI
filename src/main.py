@@ -30,17 +30,17 @@ chromeController: ChromeController = ChromeController()
 edgeController: EdgeController = EdgeController()
 firefoxController: FirefoxController = FirefoxController()
 
+firefoxController.start()
 chromeController.start()
 edgeController.start()
-firefoxController.start()
 
 while not shouldTerminate:
     sleep(0.1)
 
 Logger.warn(f'shouldTerminate: {shouldTerminate}, All modules will be terminated soon.')
-chromeController.join()
-Logger.warn('Chrome is terminated.')
-edgeController.join()
-Logger.warn('Edge is terminated.')
 firefoxController.join()
-Logger.warn('Firefox is terminated.')
+Logger.warn('Firefox controller is terminated.')
+chromeController.join()
+Logger.warn('Chrome controller is terminated.')
+edgeController.join()
+Logger.warn('Edge controller is terminated.')
