@@ -67,9 +67,9 @@ class FirefoxController():
         self.__sensorThread.join()
 
     def __handleNewTabs(self) -> None:
+        tracker = URLTracker(self.__driver)
         while not self.__shouldTerminate:
-            tracker = URLTracker(self.__driver)
-            tracker.track_new_tabs()
+            tracker.trackUrls()
             sleep(0.1)
 
     def __handleRefreshs(self) -> None:
