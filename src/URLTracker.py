@@ -8,154 +8,68 @@ from typing import Union, List
 import time
 from time import sleep
 from Logger import Logger
-
-class URLTracker:
-    def __init__(self, driver):
-        self.driver = driver
-        self.current_urls = {}
-        for handle in driver.window_handles:
-            driver.switch_to.window(handle)
-            self.current_urls[handle] = driver.current_url
-        self.page_load_times = {handle: self.get_page_load_time() for handle in driver.window_handles}
-        self.output_dir = "page_contents"
-        if not os.path.exists(self.output_dir):
-            os.makedirs(self.output_dir)
-
-    def get_page_load_time(self):
-        return self.driver.execute_script("return window.performance.timing.navigationStart;")
-
-    def trackUrls(self):
-        current_handles = set(self.driver.window_handles)
-        old_handles = set(self.current_urls.keys())
-
-        # Yeni açılan sekmeler
-        new_handles = current_handles - old_handles
-        for handle in new_handles:
-            self.driver.switch_to.window(handle)
-            self.current_urls[handle] = self.driver.current_url
-            self.page_load_times[handle] = self.get_page_load_time()
-            Logger.warn(f"New tab detected with URL: {self.driver.current_url}")
-
-        # Kapatılan sekmeleri
-        closed_handles = old_handles - current_handles
-        for handle in closed_handles:
-            Logger.warn(f"Tab closed with URL: {self.current_urls[handle]}")
-            del self.current_urls[handle]
-            del self.page_load_times[handle]
-
-        # Mevcut sekmelerdeki URL değişiklikleri
-        for handle in (current_handles & old_handles):
-            self.driver.switch_to.window(handle)
-            current_url = self.driver.current_url
-            page_load_time = self.get_page_load_time()
-
-            if self.current_urls[handle] != current_url:
-                Logger.warn(f"URL changed to: {current_url}")
-                self.current_urls[handle] = current_url
-                self.page_load_times[handle] = page_load_time
-            elif self.page_load_times[handle] != page_load_time:
-                Logger.warn(f"Page refreshed at: {handle} {self.current_urls[handle]}")
-                self.page_load_times[handle] = page_load_time
-
-        self.print_current_urls()
-        #self.save_html_content_of_current_page()
-
-
-    def print_current_urls(self):
-        print("-----------------------------------------------------------------")
-        print("Currently tracked URLs:")
-        for handle, url in self.current_urls.items():
-            print(f"Window Handle: {handle}, URL: {url}")            
-            
-    def save_html_content_of_current_page(self):
-        WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.TAG_NAME, "body")))
-        html_content = self.driver.page_source
-        print(html_content)
-        print("-----------------------------------------------------------------")
-        
-               
+import threading
+from ContentFetcher import ContentFetcher     
+     
 #source .venv/Scripts/activate
 #cd src/
 #python main.py
 #firefox --marionette
-
-'''
-#DOĞRU OLAN
-class URLTracker:
-    def __init__(self, driver):
-        self.driver = driver
-        self.current_urls = {driver.current_window_handle: driver.current_url}
-        self.page_load_times = {driver.current_window_handle: self.get_page_load_time()}
-        self.output_dir = "page_contents"
-        if not os.path.exists(self.output_dir):
-            os.makedirs(self.output_dir)
-            
-    def get_page_load_time(self):
-        # Sayfanın navigationStart zamanını döndür
-        return self.driver.execute_script("return window.performance.timing.navigationStart;")
-    
-    def trackUrls(self, duration=120, check_interval=10):
-        start_time = time.time()
-        while time.time() - start_time < duration:
-            current_handles = set(self.driver.window_handles)
-            old_handles = set(self.current_urls.keys())
-
-            # Yeni açılan ve kapatılan sekmeleri tespit et
-            new_handles = current_handles - old_handles
-            closed_handles = old_handles - current_handles
-
-            for handle in new_handles:
-                self.driver.switch_to.window(handle)
-                self.current_urls[handle] = self.driver.current_url
-                self.page_load_times[handle] = self.get_page_load_time()
-                Logger.warn(f"New tab detected with URL: {self.driver.current_url}")
-
-            for handle in closed_handles:
-                Logger.warn(f"Tab closed with URL: {self.current_urls[handle]}")
-                del self.current_urls[handle]
-                del self.page_load_times[handle]
-
-            # Mevcut sekmelerdeki URL değişikliklerini ve yenilenmelerini kontrol et
-            for handle in (current_handles & old_handles):
-                self.driver.switch_to.window(handle)
-                current_url = self.driver.current_url
-                page_load_time = self.get_page_load_time()
-
-                if self.current_urls[handle] != current_url:
-                    Logger.warn(f"URL changed to: {current_url}")
-                    self.current_urls[handle] = current_url
-                    self.page_load_times[handle] = page_load_time
-                elif self.page_load_times[handle] != page_load_time:
-                    Logger.warn(f"Page refreshed at: {handle} {self.current_urls[handle]}")
-                    self.page_load_times[handle] = page_load_time
-
-            self.print_current_urls()
-            #self.save_html_content_of_current_page()
-            sleep(check_interval)
-'''
-
-'''
-
-YİĞİTHAN
-
 class URLTracker:
     def __init__(self, driver: Union[webdriver.Edge, webdriver.Chrome, webdriver.Firefox]):
         self.__driver = driver
         self.__handles: List[str] = driver.window_handles.copy()
         self.__handleCount = len(self.__handles)
-
+        self.__thread = threading.Thread(target=self.__process, args=())
+        self.__refreshThread = threading.Thread(target=self.__handleRefreshs, args=())
+        self.__updateHandlesAndUrls()
+        self.__contentFetcher = ContentFetcher(self.__driver)
+        self.__contentFetcher.reset()
+        
     def trackUrls(self):
-        if self.__handleCount == len(self.__driver.window_handles):
-            return
+        currentHandles = self.__driver.window_handles
+        if set(currentHandles) != set(self.__handles.keys()):
+            self.__updateHandlesAndUrls(currentHandles)
+            self.__trackHtmlContentsOfUrls()
 
-        currentHandles = set(self.__driver.window_handles)
-        if len(currentHandles) > self.__handleCount:
-            newHandles = currentHandles - set(self.__handles)
-            for handle in newHandles:
-                Logger.warn(f"New tab URL: {self.__driver.current_url}")
-                self.__handles.append(handle)
-        else:
-            oldHandles = set(self.__handles) - currentHandles
-            for handle in oldHandles:
-                self.__handles.remove(handle)
-'''
+    def __updateHandlesAndUrls(self, currentHandles=None):
+        if currentHandles is None:
+            currentHandles = self.__driver.window_handles
+        updated_handles = {}
+        
+        for handle in currentHandles:
+            self.__driver.switch_to.window(handle)
+            url = self.__driver.current_url
+            updated_handles[handle] = url
+        
+        self.__handles = updated_handles
+        self.__handleCount = len(self.__handles)
+        # Orijinal sekme uzerinde kalabilmek icin
+        if self.__driver.current_window_handle in currentHandles:
+            self.__driver.switch_to.window(self.__driver.current_window_handle)
+
+    def __trackHtmlContentsOfUrls(self):
+        handles_dict = dict(self.__handles)
+        self.__contentFetcher.fetchAndPrintHtmlContents(handles_dict)
+        
+    def __getCurrentUrls(self):
+        return list(self.__handles.values())
+    
+    def __printCurrentTabsAndUrls(self):
+        print("Aktif Sekmeler ve URL'leri:")
+        for handle, url in self.__handles.items():
+            print(f"Sekme: {handle}, URL: {url}")
+
+    def __process(self) -> None:
+        self.__refreshThread.start()
+        self.__refreshThread.join()
+
+    def start(self) -> None:
+        self.__thread.start()
+
+    def join(self) -> None:
+        self.__thread.join()
+    
+    def __handleRefreshs(self) -> None:
+        while self.__handleCount != 0:
+            sleep(0.1)
