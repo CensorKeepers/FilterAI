@@ -1,5 +1,4 @@
 from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -9,12 +8,14 @@ import time
 from time import sleep
 from Logger import Logger
 import threading
-from ContentFetcher import ContentFetcher     
-     
-#source .venv/Scripts/activate
-#cd src/
-#python main.py
-#firefox --marionette
+from ContentFetcher import ContentFetcher
+
+# source .venv/Scripts/activate
+# cd src/
+# python main.py
+# firefox --marionette
+
+
 class URLTracker:
     def __init__(self, driver: Union[webdriver.Edge, webdriver.Chrome, webdriver.Firefox]):
         self.__driver = driver
@@ -25,7 +26,7 @@ class URLTracker:
         self.__updateHandlesAndUrls()
         self.__contentFetcher = ContentFetcher(self.__driver)
         self.__contentFetcher.reset()
-        
+
     def trackUrls(self):
         currentHandles = self.__driver.window_handles
         if set(currentHandles) != set(self.__handles.keys()):
@@ -36,12 +37,12 @@ class URLTracker:
         if currentHandles is None:
             currentHandles = self.__driver.window_handles
         updated_handles = {}
-        
+
         for handle in currentHandles:
             self.__driver.switch_to.window(handle)
             url = self.__driver.current_url
             updated_handles[handle] = url
-        
+
         self.__handles = updated_handles
         self.__handleCount = len(self.__handles)
         # Orijinal sekme uzerinde kalabilmek icin
@@ -51,10 +52,10 @@ class URLTracker:
     def __trackHtmlContentsOfUrls(self):
         handles_dict = dict(self.__handles)
         self.__contentFetcher.fetchAndPrintHtmlContents(handles_dict)
-        
+
     def __getCurrentUrls(self):
         return list(self.__handles.values())
-    
+
     def __printCurrentTabsAndUrls(self):
         print("Aktif Sekmeler ve URL'leri:")
         for handle, url in self.__handles.items():
@@ -69,7 +70,7 @@ class URLTracker:
 
     def join(self) -> None:
         self.__thread.join()
-    
+
     def __handleRefreshs(self) -> None:
         while self.__handleCount != 0:
             sleep(0.1)
