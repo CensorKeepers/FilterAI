@@ -1,14 +1,14 @@
 import threading
-import json
 import pathlib
+import json
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
+
 from Logger import Logger
+from URLTracker import URLTracker
 
 from time import sleep
 
-from URLTracker import URLTracker
 
 class ChromeController():
 
@@ -66,9 +66,9 @@ class ChromeController():
         self.__sensorThread.join()
 
     def __handleNewTabs(self) -> None:
+        tracker = URLTracker(self.__driver)
         while not self.__shouldTerminate:
-            tracker = URLTracker(self.__driver)
-            tracker.track_new_tabs()
+            tracker.trackNewTabs()
             sleep(0.1)
 
     def __handleRefreshs(self) -> None:
@@ -80,6 +80,7 @@ class ChromeController():
             sleep(0.1)
 
     def start(self) -> None:
+        Logger.warn('Chrome controller has been started.')
         self.__thread.start()
 
     def join(self) -> None:

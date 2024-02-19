@@ -5,10 +5,10 @@ from selenium import webdriver
 from selenium.webdriver.edge.options import Options
 
 from Logger import Logger
+from URLTracker import URLTracker
 
 from time import sleep
 
-from URLTracker import URLTracker
 
 class EdgeController():
 
@@ -30,6 +30,7 @@ class EdgeController():
     def __connectToBrowser(self) -> bool:
         edgeOptions = Options()
         edgeOptions.add_experimental_option('debuggerAddress', f'{self.__ip}:{self.__port}')
+
         while not self.__shouldTerminate:
             try:
                 self.__driver = webdriver.Edge(options=edgeOptions)
@@ -38,6 +39,7 @@ class EdgeController():
             except:
                 Logger.warn(f'Could not connect to Microsoft Edge, retrying...')
                 continue
+
         return False
 
     def __readAndApplyConfigFile(self) -> None:
@@ -64,9 +66,9 @@ class EdgeController():
         self.__sensorThread.join()
 
     def __handleNewTabs(self) -> None:
+        tracker = URLTracker(self.__driver)
         while not self.__shouldTerminate:
-            tracker = URLTracker(self.__driver)
-            tracker.track_new_tabs()
+            tracker.trackNewTabs()
             sleep(0.1)
 
     def __handleRefreshs(self) -> None:
@@ -78,6 +80,7 @@ class EdgeController():
             sleep(0.1)
 
     def start(self) -> None:
+        Logger.warn('Edge controller has been started.')
         self.__thread.start()
 
     def join(self) -> None:
