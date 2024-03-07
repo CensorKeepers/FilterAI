@@ -1,5 +1,4 @@
 from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -15,10 +14,14 @@ tab acilip kapandiysa bunu fark edip onlari listeye eklemek cikarmak
 html contentleri alirken refresh kontrol et
 html'leri al
 '''
-#source .venv/Scripts/activate
-#cd src/
-#python main.py
-#firefox --marionette
+
+
+# source .venv/Scripts/activate
+# cd src/
+# python main.py
+# firefox --marionette
+
+
 class URLTracker:
     def __init__(self, driver: Union[webdriver.Edge, webdriver.Chrome, webdriver.Firefox]):
         self.__driver = driver
@@ -31,6 +34,7 @@ class URLTracker:
         #self.__thread = threading.Thread(target=self.__process, args=())
         #self.__refreshThread = threading.Thread(target=self.__handleRefreshs, args=())
     
+
     def trackUrls(self):
         currentHandles = self.__driver.window_handles
         original_handle = self.__driver.current_window_handle
@@ -59,7 +63,7 @@ class URLTracker:
             self.__driver.switch_to.window(handle)
             url = self.__driver.current_url
             updated_handles[handle] = url
-        
+
         self.__handles = updated_handles
         if(self.__handleCount > len(self.__handles)):
             self.__driver.switch_to.window(self.__driver.current_window_handle)
@@ -94,4 +98,3 @@ class URLTracker:
     #def __handleRefreshs(self) -> None:
     #    while self.__handleCount != 0:
     #        sleep(0.1)
-
