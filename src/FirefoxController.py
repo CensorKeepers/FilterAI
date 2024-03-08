@@ -25,22 +25,6 @@ class FirefoxController():
         self.__readAndApplyConfigFile()
         self.__configureController()
 
-    def __connectToBrowser(self) -> bool:
-        serviceArgs = ['--marionette-port', str(self.__port), '--connect-existing']
-        firefoxService = Service(executable_path=self.__webdriverPath, port=3000, service_args=serviceArgs)
-
-        while not self.__shouldTerminate:
-            try:
-                self.__driver = webdriver.Firefox(service=firefoxService)
-                Logger.warn('Connected to Mozilla Firefox!')
-                return True
-
-            except:
-                Logger.warn(f'Could not connect to Mozilla Firefox, retrying...')
-                continue
-
-        return False
-
     def __readAndApplyConfigFile(self) -> None:
         file = open(self.__configPath, mode='r', encoding='utf-8')
         self.__config = json.load(file)
@@ -59,6 +43,22 @@ class FirefoxController():
         self.__tabThread.start()
         self.__tabThread.join()
 
+    def __connectToBrowser(self) -> bool:
+        serviceArgs = ['--marionette-port', str(self.__port), '--connect-existing']
+        firefoxService = Service(executable_path=self.__webdriverPath, port=3000, service_args=serviceArgs)
+
+        while not self.__shouldTerminate:
+            try:
+                self.__driver = webdriver.Firefox(service=firefoxService)
+                Logger.warn('Connected to Mozilla Firefox!')
+                return True
+
+            except:
+                Logger.warn(f'Could not connect to Mozilla Firefox, retrying...')
+                continue
+
+        return False
+
     def __handleNewTabs(self) -> None:
         tracker = URLTracker(self.__driver)
         while not self.__shouldTerminate:
@@ -66,8 +66,8 @@ class FirefoxController():
             sleep(0.1)
 
     def start(self) -> None:
-        Logger.warn('Firefox controller has been started.')
         self.__thread.start()
+        Logger.warn('Firefox controller has been started.')
 
     def join(self) -> None:
         self.__thread.join()
