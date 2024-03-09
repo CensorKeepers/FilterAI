@@ -1,5 +1,5 @@
 {
     "ip": "127.0.0.1",
     "port": 2828,
-    "webdriverPath": "C:/Users/Yigithan/FilterAI/webdrivers/geckodriver.exe"
+    "webdriverPath": "C:/bitirme_496/webdrivers/geckodriver.exe"
 }

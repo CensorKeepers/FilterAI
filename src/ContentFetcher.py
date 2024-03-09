@@ -6,10 +6,6 @@ import os
 import io
 #dict_items([('09167a15-92e3-4fa8-8e04-78a98e6416d3', 'https://www.google.com.tr/'), ('f2298a78-d1a8-4870-a70f-7f45509d61ba', 'https://www.google.com.tr/'), ('79448917-5a97-43fc-9e0d-0a9043d0f922', 'https://ubs.etu.edu.tr/'), ('f04e67bd-4845-4f88-8584-adb6d7e4da61', 'https://store.epicgames.com/'), ('d469e004-402a-430a-8777-56d445dde49d', 'about:newtab')])
 
-#refresh nereye konulcak
-#html contentleri buradan alabiliriz. print kisimlarinda degisen url ve eklenen tab'a gore alinir
-
-
 class ContentFetcher:
     def __init__(self, driver: Union[webdriver.Edge, webdriver.Chrome, webdriver.Firefox]):
         self.__driver = driver
@@ -25,12 +21,12 @@ class ContentFetcher:
         for tab_id, url in pair.items():
             if tab_id not in self.__visitedTabUrlPair:
                 self.__visitedTabUrlPair[tab_id] = url
-                Logger.warn(f"YENİ TAB {tab_id} ve {url}")
+                #Logger.warn(f"YENİ TAB {tab_id} ve {url}")
                 self.__htmlContentForTab(tab_id, url, True)
             else:
                 if url != self.__visitedTabUrlPair[tab_id]:
                     self.__visitedTabUrlPair[tab_id] = url
-                    Logger.warn(f"YENİ URL tab {tab_id} ve {url}")
+                    #Logger.warn(f"YENİ URL tab {tab_id} ve {url}")
                     self.__htmlContentForTab(tab_id, url, True)
                 else:
                     pass
@@ -38,8 +34,7 @@ class ContentFetcher:
         tabs_to_delete = [tab_id for tab_id in self.__visitedTabUrlPair if tab_id not in pair]
 
         for tab_id in tabs_to_delete:
-            Logger.warn(f"Bu {tab_id} ve {self.__visitedTabUrlPair[tab_id]} silindi ")
-            
+            #Logger.warn(f"Bu {tab_id} ve {self.__visitedTabUrlPair[tab_id]} silindi ")
             del self.__visitedTabUrlPair[tab_id]
             self.__htmlContentForTab(tab_id, url, False)
     

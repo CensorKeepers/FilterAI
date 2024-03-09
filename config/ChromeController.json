@@ -1,5 +1,5 @@
 {
     "ip": "127.0.0.1",
     "port": 9923,
-    "webdriverPath": "C:/Users/Yigithan/FilterAI/webdrivers/chromedriver.exe"
+    "webdriverPath": "C:/bitirme_496/webdrivers/chromedriver-win64/chromedriver.exe"
 }

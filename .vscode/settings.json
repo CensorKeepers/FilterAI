@@ -1,0 +1,21 @@
+{
+      "version": "0.2.0",
+      "configurations": [
+        {
+          "name": "Python: Module",
+          "type": "python",
+          "request": "launch",
+          "module": "path.to.module",
+          "args": ["run_example --arg <arg>"],
+          "justMyCode": true
+        },
+        {
+          "name": "Python: Current File",
+          "type": "python",
+          "request": "launch",
+          "program": "${file}",
+          "console": "integratedTerminal",
+          "justMyCode": true
+        }
+      ]
+}
