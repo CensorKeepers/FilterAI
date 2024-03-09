@@ -76,6 +76,7 @@ class URLTracker:
                     url = self.__driver.current_url
                 self.__handleUrlPairs[handle] = url
                 self.__jsHandler.initialEmbeddings()
+                self.__jsHandler.setLocalStorageToActiveHandle()
 
     def __trackHtmlContentsOfUrls(self):
         self.__contentFetcher.fetchAndPrintHtmlContents(self.__handleUrlPairs)
