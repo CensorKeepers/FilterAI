@@ -22,12 +22,12 @@ class ContentFetcher:
             if tabId not in self.__visitedTabUrlPair:
                 self.__visitedTabUrlPair[tabId] = url
                 # Logger.warn(f"YENİ TAB {tabId} ve {url}")
-                self.__htmlContentForTab(tabId, url, True)
+                # self.__htmlContentForTab(tabId, url, True)
             else:
                 if url != self.__visitedTabUrlPair[tabId]:
                     self.__visitedTabUrlPair[tabId] = url
                     # Logger.warn(f"YENİ URL tab {tabId} ve {url}")
-                    self.__htmlContentForTab(tabId, url, True)
+                    # self.__htmlContentForTab(tabId, url, True)
                 else:
                     pass
 
@@ -40,7 +40,7 @@ class ContentFetcher:
             self.__htmlContentForTab(tabId, url, False)
 
     def __htmlContentForTab(self, tabId: str, url: str, isOpen: bool):
-        directory = '/home/ubuntu/FilterAI/html_files'
+        directory = 'C:/Users/Yigithan/FilterAI/html_files'
         if not os.path.exists(directory):
             os.makedirs(directory)
 
