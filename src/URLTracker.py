@@ -17,22 +17,15 @@ html'leri al
 class URLTracker:
     def __init__(self, driver: Union[webdriver.Edge, webdriver.Chrome, webdriver.Firefox]):
         self.__driver = driver
-        self.__handleUrlPairs: Dict[str, str] = {}
-        self.__jsHandler = JSHandler(self.__driver)
+        self.__handle: str = ''
+        self.__url: str = ''
         self.__contentFetcher = ContentFetcher(self.__driver)
+        self.__jsHandler = JSHandler(self.__driver)
         self.__initializeHandlesAndUrls()
 
     def __initializeHandlesAndUrls(self):
-        initialHandles = self.__driver.window_handles.copy()
-        self.__jsHandler.deleteLocalStorage()
-
-        for handle in initialHandles:
-            self.__driver.switch_to.window(handle)
-            url = self.__driver.current_url
-            self.__handleUrlPairs[handle] = url
-            self.__jsHandler.initialEmbeddings()
-
-        self.__jsHandler.setLocalStorageToActiveHandle()
+        self.__handle = self.__driver.current_window_handle
+        self.__url = self.__driver.current_url
 
     def trackUrls(self):
         # Driver açık mı değil mi diye kontrol.
@@ -42,41 +35,18 @@ class URLTracker:
         except:
             return
 
-        self.__updateHandlesAndUrls()
-        self.__trackHtmlContentsOfUrls()
+        self.__removeOtherTabs()
+        # self.__trackHtmlContentsOfUrls()
 
-    def __updateHandlesAndUrls(self) -> None:
-        currentHandles = self.__driver.window_handles.copy()
-        if set(currentHandles) == set(self.__handleUrlPairs):
-            # Tarayıcı ve Selenium'daki sekme sayıları aynıysa aktif sekmeye geçiş yap. Çünkü kullanıcı sekmeler arası geziniyor olabilir.
-            activeUserHandle = self.__jsHandler.getActiveTab()
-            activeDriverHandle = self.__driver.current_window_handle
-            if activeDriverHandle != activeUserHandle:
-                self.__driver.switch_to.window(activeUserHandle)
-                print(f'Kullanıcı {activeDriverHandle} sekmesinden {activeUserHandle} sekmesine geçiş yaptı!')
-                return
-
-            activeDriverHandle = self.__driver.current_window_handle
-            activeURL = self.__driver.current_url
-            self.__handleUrlPairs[activeDriverHandle] = activeURL
-
-        elif len(currentHandles) < len(self.__handleUrlPairs):
-            handlesToBeRemoved = set(self.__handleUrlPairs) - set(currentHandles)
+    def __removeOtherTabs(self) -> None:
+        handles = self.__driver.window_handles
+        if len(handles) > 1:
+            handlesToBeRemoved = set(handles) - set([self.__handle])
             for handle in handlesToBeRemoved:
-                del self.__handleUrlPairs[handle]
-
-        else:  # currentHandles > self.__handleUrlPairs. Yani yeni sekmeler açılmış demektir.
-            handlesToBeAdded = set(currentHandles) - set(self.__handleUrlPairs)
-            for handle in handlesToBeAdded:
                 self.__driver.switch_to.window(handle)
-                url = self.__driver.current_url
-                # Firefox'da yeni sekme olan 'about:newtab' sayfasında JavaScript çalıştırılamıyor. Bu nedenle Google'a yönlendiriyoruz.
-                if url == 'about:newtab':
-                    self.__driver.get('https://www.google.com.tr')
-                    url = self.__driver.current_url
-                self.__handleUrlPairs[handle] = url
-                self.__jsHandler.initialEmbeddings()
-                self.__jsHandler.setLocalStorageToActiveHandle()
+                self.__driver.close()
+            self.__driver.switch_to.window(self.__handle)
+            self.__jsHandler.makeAlert('Only one tab is allowed.')
 
     def __trackHtmlContentsOfUrls(self):
-        self.__contentFetcher.fetchAndPrintHtmlContents(self.__handleUrlPairs)
+        self.__contentFetcher.fetchAndPrintHtmlContents(self.__handle)

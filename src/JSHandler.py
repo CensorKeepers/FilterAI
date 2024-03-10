@@ -8,24 +8,21 @@ class JSHandler():
     def __init__(self, driver: Union[webdriver.Edge, webdriver.Chrome, webdriver.Firefox]) -> 'JSHandler':
         self.__driver = driver
 
-    def deleteLocalStorage(self) -> None:
-        self.__driver.execute_script(f'window.localStorage.removeItem("activeHandle");')
-
-    def setLocalStorageToActiveHandle(self) -> None:
-        activeHandle = self.__driver.current_window_handle
-        self.__driver.execute_script(f'window.localStorage.setItem("activeHandle", "{activeHandle}");')
-
     def initialEmbeddings(self) -> None:
-        currentHandle = self.__driver.current_window_handle
-        self.__driver.execute_script(f'window.myTabId = "{currentHandle}";')
         self.__driver.execute_script('''
+           window.isUserHere = true;
            document.addEventListener("visibilitychange", (event) => {
              if (document.visibilityState == "visible") {
-               window.localStorage.setItem('activeHandle', window.myTabId);
-               console.log(window.localStorage.getItem('activeHandle'))
+               window.isUserHere = true;
+             }
+             else {
+               window.isUserHere = false;
              }
            });
         ''')
+
+    def isUserHere(self) -> bool:
+        return self.isVariableExist('window')
 
     def isVariableExist(self, var: str) -> bool:
         try:
@@ -34,5 +31,5 @@ class JSHandler():
         except:
             return False
 
-    def getActiveTab(self) -> str:
-        return self.__driver.execute_script(f'return window.localStorage.getItem("activeHandle");')
+    def makeAlert(self, message: str) -> None:
+        self.__driver.execute_script(f'alert("{message}")')
