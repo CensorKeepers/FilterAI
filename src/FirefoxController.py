@@ -1,11 +1,13 @@
-import threading
-import pathlib
-import json
 from selenium import webdriver
 from selenium.webdriver.firefox.service import Service
+import threading
+from time import sleep
+import pathlib
+import json
+
 from Logger import Logger
 from URLTracker import URLTracker
-from time import sleep
+
 
 class FirefoxController():
 
@@ -55,6 +57,8 @@ class FirefoxController():
         self.__driver.get('https://www.google.com.tr')
         self.__tabThread.start()
         self.__tabThread.join()
+
+        self.__driver.quit()
 
     def __handleNewTabs(self) -> None:
         tracker = URLTracker(self.__driver)

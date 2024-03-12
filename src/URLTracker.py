@@ -1,76 +1,80 @@
 from selenium import webdriver
-import selenium
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from typing import Union, List
-from time import sleep
+from selenium.common.exceptions import NoSuchWindowException
+from typing import Union
+
 from Logger import Logger
-import threading
-from ContentFetcher import ContentFetcher     
-from selenium.common.exceptions import NoSuchWindowException    
+from ContentFetcher import ContentFetcher
+from JSHandler import JSHandler
+
 
 class URLTracker:
-    def __init__(self, driver):
+    def __init__(self, driver: Union[webdriver.Firefox, webdriver.Edge, webdriver.Chrome]):
         self.__driver = driver
-        self.__handles = {}  
-        self.__handles.update({handle: self.__driver.current_url for handle in driver.window_handles})
-        self._handleCount = len(self.__handles)
-        self.__updateHandlesAndUrls()
+        self.__handleUrlPairs = {}
         self.__contentFetcher = ContentFetcher(self.__driver)
-        self.__lastActiveHandle = ""
+        self.__jsHandler = JSHandler(self.__driver)
+        self.__lastActiveHandle = self.__driver.current_window_handle
+        self.__initializeHandlesAndUrls()
 
+    def __initializeHandlesAndUrls(self) -> None:
+        handles = self.__driver.window_handles.copy()
+        for handle in handles:
+            self.__driver.switch_to.window(handle)
+            self.__handleUrlPairs[handle] = self.__driver.current_url
+            self.__jsHandler.initialEmbeddings()
 
     def trackUrls(self):
         try:
             currentHandles = self.__driver.window_handles
-            original_handle = self.__driver.current_window_handle
-
-            if set(currentHandles) != set(self.__handles.keys()):            
-                self.__updateHandlesAndUrls(currentHandles)
-            else:
-                if original_handle != self.__lastActiveHandle:
-                    Logger.warn(f"Kullanici {self.__lastActiveHandle} sekmesinden {original_handle} sekmesine gecti")
-                    self.__lastActiveHandle = original_handle
-                    self.__driver.switch_to.window(original_handle)
-
-                current_url = self.__driver.current_url
-                if self.__handles[original_handle] != current_url:
-                    Logger.warn(f"URL changed in {original_handle} from {self.__handles[original_handle]} to {current_url}")
-                    self.__handles[original_handle] = current_url
-        except NoSuchWindowException:
-            #Logger.error("Bir pencere/sekmeye erişilemiyor.")
+            activeHandle = self.__driver.current_window_handle
+        except:
             self.__handleWindowClosedScenario()
+
+        if set(currentHandles) != set(self.__handleUrlPairs):
+            self.__updateHandlesAndUrls()
+
+        # if activeHandle != self.__lastActiveHandle:
+        #    Logger.warn(f"Kullanici {self.__lastActiveHandle} sekmesinden {activeHandle} sekmesine gecti")
+        #    self.__lastActiveHandle = activeHandle
+        #    self.__driver.switch_to.window(activeHandle)
+
+        current_url = self.__driver.current_url
+        if self.__handleUrlPairs[activeHandle] != current_url:
+            Logger.warn(f"[URL]: URL changed in {activeHandle} from {self.__handleUrlPairs[activeHandle]} to {current_url}")
+            self.__handleUrlPairs[activeHandle] = current_url
+
+        if self.__jsHandler.isPageRefreshed():
+            Logger.warn(f'[REFRESH]: Tab "{activeHandle}", URL "{self.__handleUrlPairs[activeHandle]}" has been refreshed!')
+            self.__jsHandler.initialEmbeddings()
+
         self.__trackHtmlContentsOfUrls()
-    
-    
-    def __updateHandlesAndUrls(self, currentHandles=None):
+
+    def __updateHandlesAndUrls(self):
         try:
-            if currentHandles is None:
-                currentHandles = self.__driver.window_handles
+            driverHandles = set(self.__driver.window_handles.copy())
+            localHandles = set(self.__handleUrlPairs)
 
-            currentHandlesSet = set(currentHandles)
-            existingHandlesSet = set(self.__handles.keys())
-
-            closedHandles = existingHandlesSet - currentHandlesSet
-            newHandles = currentHandlesSet - existingHandlesSet
+            closedHandles = localHandles - driverHandles
+            newHandles = driverHandles - localHandles
 
             for handle in closedHandles:
                 self.__deleteClosedTabHtmlContent(handle)
-                del self.__handles[handle]     
+                del self.__handleUrlPairs[handle]
 
             for handle in newHandles:
                 self.__driver.switch_to.window(handle)
                 url = self.__driver.current_url
-                self.__handles[handle] = url
+                self.__handleUrlPairs[handle] = url
+                self.__jsHandler.initialEmbeddings()
 
-            if self.__driver.current_window_handle in currentHandles:
-                self.__driver.switch_to.window(self.__driver.current_window_handle)
-
-            self._handleCount = len(self.__handles)
         except NoSuchWindowException:
             self.__handleWindowClosedScenario()
-            
+
+    def __trackHtmlContentsOfUrls(self):
+        handlesDict = dict(self.__handleUrlPairs)
+        currentHandle = self.__driver.current_window_handle
+        self.__contentFetcher.fetchAndPrintHtmlContents(handlesDict, currentHandle)
+
     def __handleWindowClosedScenario(self):
         currentHandles = self.__driver.window_handles
         if currentHandles:
@@ -85,11 +89,5 @@ class URLTracker:
         self.__driver.quit()
         Logger.info("Program has been successfully stopped.")
 
-
-    def __trackHtmlContentsOfUrls(self):
-        handlesDict = dict(self.__handles)
-        currentHandle = self.__driver.current_window_handle
-        self.__contentFetcher.fetchAndPrintHtmlContents(handlesDict, currentHandle)
-        
     def __deleteClosedTabHtmlContent(self, deletedTab):
         self.__contentFetcher.deleteFiles(deletedTab)
