@@ -32,10 +32,10 @@ class ChromeController():
         while not self.__shouldTerminate:
             try:
                 self.__driver = webdriver.Chrome(options=chromeOptions)
-                Logger.warn('Connected to Google Chrome!')
+                Logger.warn('[CHROME]: Connected to Google Chrome!')
                 return True
             except:
-                Logger.warn(f'Could not connect to Google Chrome, retrying...')
+                Logger.warn(f'[CHROME]: Could not connect to Google Chrome, retrying...')
                 continue
 
         return False
@@ -58,6 +58,8 @@ class ChromeController():
         self.__tabThread.start()
         self.__tabThread.join()
 
+        self.__driver.quit()
+
     def __handleNewTabs(self) -> None:
         tracker = URLTracker(self.__driver)
         while not self.__shouldTerminate:
@@ -65,7 +67,7 @@ class ChromeController():
             sleep(0.1)
 
     def start(self) -> None:
-        Logger.warn('Chrome controller has been started.')
+        Logger.warn('[CHROME]: Chrome controller has been started.')
         self.__thread.start()
 
     def join(self) -> None:

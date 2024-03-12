@@ -1,6 +1,9 @@
 from bs4 import BeautifulSoup
 import os
 
+from Logger import Logger
+
+
 class TextExtractor:
     def __init__(self, text_files_directory):
         self.text_files_directory = text_files_directory
@@ -11,7 +14,6 @@ class TextExtractor:
         soup = BeautifulSoup(html_content, 'html.parser')
         for script_or_style in soup(["script", "style", "head", "footer", "nav", "aside"]):
             script_or_style.decompose()
-
 
         lines = []
         for element in soup.stripped_strings:
@@ -25,5 +27,4 @@ class TextExtractor:
 
         with open(output_file_path, 'w', encoding='utf-8') as output_file:
             output_file.write(text)
-        print(f"Extracted text content has been saved to: {output_file_path}")
-
+        Logger.warn(f"[TEXT]: Extracted text content has been saved to: {output_file_path}")

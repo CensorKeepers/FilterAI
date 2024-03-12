@@ -36,3 +36,6 @@ __pycache__
 webdrivers
 *.log
 myenv
+.vscode
+html_files
+text_files
