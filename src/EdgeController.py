@@ -32,10 +32,10 @@ class EdgeController():
         while not self.__shouldTerminate:
             try:
                 self.__driver = webdriver.Edge(options=edgeOptions)
-                Logger.warn('Connected to Microsoft Edge!')
+                Logger.warn('[EGDE]: Connected to Microsoft Edge!')
                 return True
             except:
-                Logger.warn(f'Could not connect to Microsoft Edge, retrying...')
+                Logger.warn(f'[EDGE]: Could not connect to Microsoft Edge, retrying...')
                 continue
 
         return False
@@ -58,6 +58,8 @@ class EdgeController():
         self.__tabThread.start()
         self.__tabThread.join()
 
+        self.__driver.quit()
+
     def __handleNewTabs(self) -> None:
         tracker = URLTracker(self.__driver)
         while not self.__shouldTerminate:
@@ -65,7 +67,7 @@ class EdgeController():
             sleep(0.1)
 
     def start(self) -> None:
-        Logger.warn('Edge controller has been started.')
+        Logger.warn('[EDGE]: Edge controller has been started.')
         self.__thread.start()
 
     def join(self) -> None:

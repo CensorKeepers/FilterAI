@@ -1,11 +1,13 @@
-import threading
-import pathlib
-import json
 from selenium import webdriver
 from selenium.webdriver.firefox.service import Service
+import threading
+from time import sleep
+import pathlib
+import json
+
 from Logger import Logger
 from URLTracker import URLTracker
-from time import sleep
+
 
 class FirefoxController():
 
@@ -29,11 +31,11 @@ class FirefoxController():
         while not self.__shouldTerminate:
             try:
                 self.__driver = webdriver.Firefox(service=firefoxService)
-                Logger.warn('Connected to Mozilla Firefox!')
+                Logger.warn('[FIREFOX]: Connected to Mozilla Firefox!')
                 return True
 
             except:
-                Logger.warn(f'Could not connect to Mozilla Firefox, retrying...')
+                Logger.warn(f'[FIREFOX]: Could not connect to Mozilla Firefox, retrying...')
                 continue
 
         return False
@@ -56,6 +58,8 @@ class FirefoxController():
         self.__tabThread.start()
         self.__tabThread.join()
 
+        self.__driver.quit()
+
     def __handleNewTabs(self) -> None:
         tracker = URLTracker(self.__driver)
         while not self.__shouldTerminate:
@@ -63,7 +67,7 @@ class FirefoxController():
             sleep(0.1)
 
     def start(self) -> None:
-        Logger.warn('Firefox controller has been started.')
+        Logger.warn('[FIREFOX]: Firefox controller has been started.')
         self.__thread.start()
 
     def join(self) -> None:
