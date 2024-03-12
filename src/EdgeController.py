@@ -15,8 +15,6 @@ class EdgeController():
     def __init__(self) -> 'EdgeController':
         self.__thread = threading.Thread(target=self.__process, args=())
         self.__tabThread = threading.Thread(target=self.__handleNewTabs, args=())
-        self.__refreshThread = threading.Thread(target=self.__handleRefreshs, args=())
-        self.__sensorThread = threading.Thread(target=self.__handleHTMLchanges, args=())
         self.__driver: webdriver.Edge = None
         self.__webdriverPath: str = ''
         self.__ip: str = ''
@@ -58,25 +56,12 @@ class EdgeController():
 
         self.__driver.get('https://www.google.com.tr')
         self.__tabThread.start()
-        self.__refreshThread.start()
-        self.__sensorThread.start()
-
         self.__tabThread.join()
-        self.__refreshThread.join()
-        self.__sensorThread.join()
 
     def __handleNewTabs(self) -> None:
         tracker = URLTracker(self.__driver)
         while not self.__shouldTerminate:
-            tracker.trackNewTabs()
-            sleep(0.1)
-
-    def __handleRefreshs(self) -> None:
-        while not self.__shouldTerminate:
-            sleep(0.1)
-
-    def __handleHTMLchanges(self) -> None:
-        while not self.__shouldTerminate:
+            tracker.trackUrls()
             sleep(0.1)
 
     def start(self) -> None:

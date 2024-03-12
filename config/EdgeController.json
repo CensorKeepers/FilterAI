@@ -1,5 +1,5 @@
 {
     "ip": "127.0.0.1",
     "port": 9922,
-    "webdriverPath": "C:/Users/Yigithan/FilterAI/webdrivers/edgedriver.exe"
+    "webdriverPath": "C:/bitirme_496/webdrivers/msedgedriver.exe"
 }
