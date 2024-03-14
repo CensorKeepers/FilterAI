@@ -14,14 +14,7 @@ class URLTracker:
         self.__contentFetcher = ContentFetcher(self.__driver)
         self.__jsHandler = JSHandler(self.__driver)
         self.__lastActiveHandle = self.__driver.current_window_handle
-        self.__initializeHandlesAndUrls()
-
-    def __initializeHandlesAndUrls(self) -> None:
-        handles = self.__driver.window_handles.copy()
-        for handle in handles:
-            self.__driver.switch_to.window(handle)
-            self.__handleUrlPairs[handle] = self.__driver.current_url
-            self.__jsHandler.initialEmbeddings()
+        self.__updateHandlesAndUrls()
 
     def trackUrls(self):
         try:
@@ -42,8 +35,9 @@ class URLTracker:
         if self.__handleUrlPairs[activeHandle] != current_url:
             Logger.warn(f"[URL]: URL changed in {activeHandle} from {self.__handleUrlPairs[activeHandle]} to {current_url}")
             self.__handleUrlPairs[activeHandle] = current_url
+            self.__jsHandler.initialEmbeddings()
 
-        if self.__jsHandler.isPageRefreshed():
+        elif self.__jsHandler.isPageRefreshed():
             Logger.warn(f'[REFRESH]: Tab "{activeHandle}", URL "{self.__handleUrlPairs[activeHandle]}" has been refreshed!')
             self.__jsHandler.initialEmbeddings()
 

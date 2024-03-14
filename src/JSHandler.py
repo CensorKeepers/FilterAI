@@ -19,11 +19,11 @@ class JSHandler():
         handle = self.__driver.current_window_handle
         WebDriverWait(self.__driver, 5).until(EC.presence_of_element_located((By.TAG_NAME, 'body')))
         self.__driver.execute_script(f'''
-                window.myTabId = '{handle}';
-                let element = document.createElement('div');
-                element.id = '{handle}';
-                element.style.display = 'none';
-                document.body.appendChild(element);
+            window.myTabId = '{handle}';
+            let element = document.createElement('div');
+            element.id = '{handle}';
+            element.style.display = 'none';
+            document.body.appendChild(element);
         ''')
 
     def isPageRefreshed(self) -> bool:
