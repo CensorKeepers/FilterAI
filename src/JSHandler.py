@@ -29,3 +29,6 @@ class JSHandler():
     def isPageRefreshed(self) -> bool:
         handle = self.__driver.current_window_handle
         return self.__driver.execute_script(f'''return document.getElementById('{handle}') === null;''')
+
+    def restoreFilteredContent(self, body: str) -> None:
+        self.__driver.execute_script(f'document.body = "{body}"')

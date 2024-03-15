@@ -5,6 +5,9 @@ import os
 import io
 import shutil
 from TextExtractor import TextExtractor
+from SentenceExtractor import SentenceExtractor
+from CensorDecider import CensorDecider
+from JSHandler import JSHandler
 
 
 class ContentFetcher:
@@ -13,6 +16,8 @@ class ContentFetcher:
         self.html_files_directory = "html_files"
         self.text_files_directory = "text_files"
         self.textExtractor = TextExtractor(self.text_files_directory)
+        self.__sentenceExtractor = SentenceExtractor()
+        self.__censorDecider = CensorDecider()
         self.__reset_directories()
 
     def __reset_directories(self):
@@ -21,7 +26,7 @@ class ContentFetcher:
                 shutil.rmtree(directory)
             os.makedirs(directory)
 
-    def fetchAndPrintHtmlContents(self, handlesDict, currentHandle):
+    def fetchAndPrintHtmlContents(self, handlesDict, currentHandle, jsHandler: JSHandler):
         if currentHandle in handlesDict:
             url = handlesDict[currentHandle]
             current_html_content = self.__driver.page_source
@@ -44,8 +49,20 @@ class ContentFetcher:
                     file.write(current_html_content)
                 Logger.warn(f"[HTML]: HTML content for {url} has been updated or saved to {html_file_path}.")
                 self.textExtractor.extractAndSaveText(current_html_content, currentHandle)
+                self.__filterText(jsHandler)
         else:
             Logger.warn("Current handle is not found in handles dictionary.")
+
+    def __filterText(self, jsHandler: JSHandler) -> None:
+        # TODO: html_files dizininde diriver'ın bağlı olduğu handle ID'ye ait HTML dosyasını aç. İçeriğini oku ve değişkene kaydet.
+        sentences = self.__sentenceExtractor.extractSentences()
+        body: str = ''
+        for sentence in sentences:
+            # TODO: Modele 'sentence' yi sor. Gelen cevaba göre 'sentence'yi düzenle ve başka bir değikene koy.
+            # TODO: Düzenlenmemiş 'sentence'yi HTML dosyasında ara ve düzenlenmişiyle yer değiştir.
+            pass
+
+        jsHandler.restoreFilteredContent(body)
 
     def deleteFiles(self, deletedTabHandle):
         html_file_path = os.path.join(self.html_files_directory, f"{deletedTabHandle}.txt")
