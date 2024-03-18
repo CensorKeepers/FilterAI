@@ -5,13 +5,13 @@ from Logger import Logger
 
 
 class TextExtractor:
-    def __init__(self, text_files_directory) -> 'TextExtractor':
+    def __init__(self, text_files_directory):
         self.text_files_directory = text_files_directory
         if not os.path.exists(self.text_files_directory):
             os.makedirs(self.text_files_directory)
 
-    def extractAndSaveText(self, htmlBody: str, handle: str) -> None:
-        soup = BeautifulSoup(htmlBody, 'html.parser')
+    def extractAndSaveText(self, html_content, handle):
+        soup = BeautifulSoup(html_content, 'html.parser')
         for script_or_style in soup(["script", "style", "head", "footer", "nav", "aside"]):
             script_or_style.decompose()
 
@@ -23,7 +23,7 @@ class TextExtractor:
                 lines.append(element + " ")
         text = "".join(lines).strip()
 
-        output_file_path = os.path.join(self.text_files_directory, f"{handle}.txt")
+        output_file_path = os.path.join(self.text_files_directory, f"{handle}_extracted.txt")
 
         with open(output_file_path, 'w', encoding='utf-8') as output_file:
             output_file.write(text)

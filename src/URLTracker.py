@@ -67,7 +67,7 @@ class URLTracker:
     def __trackHtmlContentsOfUrls(self):
         handlesDict = dict(self.__handleUrlPairs)
         currentHandle = self.__driver.current_window_handle
-        self.__contentFetcher.fetchAndPrintHtmlContents(handlesDict, currentHandle, self.__jsHandler)
+        self.__contentFetcher.fetchAndPrintHtmlContents(handlesDict, currentHandle)
 
     def __handleWindowClosedScenario(self):
         currentHandles = self.__driver.window_handles
