@@ -29,3 +29,31 @@ class JSHandler():
     def isPageRefreshed(self) -> bool:
         handle = self.__driver.current_window_handle
         return self.__driver.execute_script(f'''return document.getElementById('{handle}') === null;''')
+
+    def restoreFilteredContent(self, body: str) -> None:
+        self.__driver.execute_script(f'document.body.innerHTML = arguments[0];', body)
+
+    def hideDocument(self) -> None:
+        self.__driver.execute_script(f'document.body.style.visibility = "hidden";')
+
+    def showDocument(self) -> None:
+        self.__driver.execute_script(f'document.body.style.visibility = "visible";')
+
+    def replace(self, old: str, new: str) -> None:
+        self.__driver.execute_script('''
+            function replaceInText(element, pattern, replacement) {
+                for (let node of element.childNodes) {
+                    switch (node.nodeType) {
+                        case Node.ELEMENT_NODE:
+                            replaceInText(node, pattern, replacement);
+                            break;
+                        case Node.TEXT_NODE:
+                            node.textContent = node.textContent.replace(pattern, replacement);
+                            break;
+                        case Node.DOCUMENT_NODE:
+                            replaceInText(node, pattern, replacement);
+                    }
+                }
+            }
+            replaceInText(document.body, arguments[0], arguments[1]);
+        ''', old, new)
