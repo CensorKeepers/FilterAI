@@ -5,7 +5,7 @@ import os
 import io
 import shutil
 from TextExtractor import TextExtractor
-
+from DetoxifySentences import predict_detoxify
 
 class ContentFetcher:
     def __init__(self, driver: Union[webdriver.Edge, webdriver.Chrome, webdriver.Firefox]):
@@ -34,8 +34,10 @@ class ContentFetcher:
                 if existing_html_content == current_html_content:
                     # Logger.warn(f"No changes detected in {url}. File {html_file_path} remains unchanged.")
                     return
-                else:
-                    shouldExtractText = True
+                else:           
+                    shouldExtractText = self.textExtractor.compareHTMLFiles(current_html_content, currentHandle)
+
+
             else:
                 shouldExtractText = True
 
@@ -43,7 +45,7 @@ class ContentFetcher:
                 with open(html_file_path, "w", encoding="utf-8") as file:
                     file.write(current_html_content)
                 Logger.warn(f"[HTML]: HTML content for {url} has been updated or saved to {html_file_path}.")
-                self.textExtractor.extractAndSaveText(current_html_content, currentHandle)
+                self.textExtractor.extractAndSaveText(current_html_content, currentHandle, True)
         else:
             Logger.warn("Current handle is not found in handles dictionary.")
 

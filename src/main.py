@@ -9,6 +9,7 @@ from FirefoxController import FirefoxController
 import signal
 from time import sleep
 
+from DetoxifySentences import load_model_detoxify
 
 def signalHandler(sig, frame):
     global shouldTerminate
@@ -29,6 +30,8 @@ utilityObjects.append(Logger())
 chromeController: ChromeController = ChromeController()
 edgeController: EdgeController = EdgeController()
 firefoxController: FirefoxController = FirefoxController()
+
+load_model_detoxify()
 
 firefoxController.start()
 chromeController.start()
