@@ -5,6 +5,7 @@ from Logger import Logger
 from ChromeController import ChromeController
 from EdgeController import EdgeController
 from FirefoxController import FirefoxController
+from DetoxifySentences import load_model_detoxify
 
 import signal
 from time import sleep
@@ -29,6 +30,8 @@ utilityObjects.append(Logger())
 chromeController: ChromeController = ChromeController()
 edgeController: EdgeController = EdgeController()
 firefoxController: FirefoxController = FirefoxController()
+
+load_model_detoxify()
 
 firefoxController.start()
 chromeController.start()
