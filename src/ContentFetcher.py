@@ -7,7 +7,7 @@ import shutil
 from TextExtractor import TextExtractor
 from SentenceExtractor import SentenceExtractor
 from JSHandler import JSHandler
-from DetoxifySentences import predict_detoxify
+from DetoxifySentences import predict
 
 
 class ContentFetcher:
@@ -63,7 +63,7 @@ class ContentFetcher:
         jsHandler.hideDocument()
         words = self.__sentenceExtractor.correctWords()
         Logger.warn(f'[LLM]: Predicting the words...')
-        detoxifyResults: List[float] = predict_detoxify(words)['toxicity']
+        detoxifyResults: List[float] = predict(words)
         Logger.warn(f'[FILTER]: Filtering has begun.')
         for i in range(len(words)):
             if detoxifyResults[i] >= 0.5:

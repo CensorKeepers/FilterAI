@@ -1,4 +1,5 @@
 from detoxify import Detoxify
+from typing import List
 
 model = None
 
@@ -8,6 +9,6 @@ def load_model_detoxify():
     model = Detoxify('multilingual')
 
 
-def predict_detoxify(sentences):
+def predict(sentences: List[str]) -> List[float]:
     predict = model.predict(sentences)
-    return predict
+    return predict['toxicity']
