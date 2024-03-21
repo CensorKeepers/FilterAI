@@ -42,13 +42,18 @@ class JSHandler():
     def replace(self, old: str, new: str) -> None:
         self.__driver.execute_script('''
             function replaceInText(element, pattern, replacement) {
+                const re = new RegExp(pattern, 'gi');
                 for (let node of element.childNodes) {
                     switch (node.nodeType) {
                         case Node.ELEMENT_NODE:
                             replaceInText(node, pattern, replacement);
                             break;
                         case Node.TEXT_NODE:
-                            node.textContent = node.textContent.replace(pattern, replacement);
+                            if (node.textContent.match(re)) {
+                                const span = document.createElement('span');
+                                span.innerHTML = node.textContent.replace(re, replacement);
+                                node.parentNode.replaceChild(span, node);
+                            }
                             break;
                         case Node.DOCUMENT_NODE:
                             replaceInText(node, pattern, replacement);
