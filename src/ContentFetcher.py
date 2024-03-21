@@ -16,7 +16,7 @@ class ContentFetcher:
         self.html_files_directory = "html_files"
         self.text_files_directory = "text_files"
         self.textExtractor = TextExtractor(self.text_files_directory)
-        self.__sentenceExtractor = SentenceExtractor(self.__driver)
+        self.__sentenceExtractor = SentenceExtractor(self.__driver, self.text_files_directory)
         self.__reset_directories()
 
     def __reset_directories(self):
@@ -66,9 +66,9 @@ class ContentFetcher:
         detoxifyResults: List[float] = predict(words)
         Logger.warn(f'[FILTER]: Filtering has begun.')
         for i in range(len(words)):
-            if detoxifyResults[i] >= 0.5:
-                modifiedWord = '##$$*!-*$'
-                currentWord = words[i]
+            currentWord = words[i]
+            if detoxifyResults[i] >= 0.7:
+                modifiedWord = f'<span style="color: red;">{currentWord}</span>'
                 Logger.warn(f'[FILTER]: The word "{currentWord}" is being filtered with toxicity: {detoxifyResults[i]}')
                 jsHandler.replace(currentWord, modifiedWord)
 

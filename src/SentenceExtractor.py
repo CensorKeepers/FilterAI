@@ -11,12 +11,14 @@ from Logger import Logger
 
 class SentenceExtractor():
 
-    def __init__(self, driver: Union[webdriver.Firefox, webdriver.Edge, webdriver.Chrome]) -> 'SentenceExtractor':
+    def __init__(self, driver: Union[webdriver.Firefox, webdriver.Edge, webdriver.Chrome], text_files_directory) -> 'SentenceExtractor':
         self.__driver = driver
         self.__apiKey: str = dotenv_values('.env')['OPENAI_API_KEY']
         self.__openAiClient = OpenAI(api_key=self.__apiKey)
         self.__model = 'gpt-3.5-turbo'
-        self.__textFilesDirectory = "text_files"
+        self.__textFilesDirectory = text_files_directory
+        if not os.path.exists(self.__textFilesDirectory):
+            os.makedirs(self.__textFilesDirectory)
 
     def correctWords(self) -> List[str]:
         currentHandle = self.__driver.current_window_handle
