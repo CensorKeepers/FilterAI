@@ -15,12 +15,13 @@ class ContentFetcher:
         self.__driver = driver
         self.html_files_directory = "html_files"
         self.text_files_directory = "text_files"
+        self.detoxify_result_directory = "detoxify_results"
         self.textExtractor = TextExtractor(self.text_files_directory)
         self.__sentenceExtractor = SentenceExtractor(self.__driver, self.text_files_directory)
         self.__reset_directories()
 
     def __reset_directories(self):
-        for directory in [self.html_files_directory, self.text_files_directory]:
+        for directory in [self.html_files_directory, self.text_files_directory, self.detoxify_result_directory]:
             if os.path.exists(directory):
                 shutil.rmtree(directory)
             os.makedirs(directory)
@@ -56,20 +57,49 @@ class ContentFetcher:
                 self.__filterText(jsHandler)
         else:
             Logger.warn("Current handle is not found in handles dictionary.")
-
+            
+    def __loadDetoxifyResults(self):
+        detoxify_results_path = os.path.join(self.detoxify_result_directory, "detoxify_results.txt")
+        if not os.path.exists(detoxify_results_path):
+            return {}
+        
+        with open(detoxify_results_path, "r", encoding="utf-8") as file:
+            lines = file.readlines()
+        
+        results = {}
+        for line in lines:
+            parts = line.strip().split(":")
+            if len(parts) == 2:
+                results[parts[0]] = float(parts[1])
+        
+        return results
+    
+    def __saveDetoxifyResult(self, word, toxicity):
+        detoxify_results_path = os.path.join(self.detoxify_result_directory, "detoxify_results.txt")
+        with open(detoxify_results_path, "a", encoding="utf-8") as file:
+            file.write(f"{word}:{toxicity}\n")
+            
+    
     def __filterText(self, jsHandler: JSHandler) -> None:
         currentHandle = self.__driver.current_window_handle
         html_file_path = os.path.join(self.html_files_directory, f"{currentHandle}.txt")
         jsHandler.hideDocument()
+        
         words = self.__sentenceExtractor.correctWords()
         Logger.warn(f'[LLM]: Predicting the words...')
-        detoxifyResults: List[float] = predict(words)
-        Logger.warn(f'[FILTER]: Filtering has begun.')
-        for i in range(len(words)):
-            currentWord = words[i]
-            if detoxifyResults[i] >= 0.7:
+        Logger.warn(f'[FILTER]: Filtering has begun.') 
+        detoxifyResults = self.__loadDetoxifyResults()
+
+        for currentWord in words:
+            if currentWord not in detoxifyResults:
+                toxicity = predict(currentWord)  
+                #Logger.warn(f"------------------------------------------ YENİ KELİME KAYDEDİLDİ {currentWord} -> {toxicity}")
+                self.__saveDetoxifyResult(currentWord, toxicity)
+                detoxifyResults[currentWord] = toxicity  
+
+            if detoxifyResults[currentWord] >= 0.8:
                 modifiedWord = f'<span style="color: red;">{currentWord}</span>'
-                Logger.warn(f'[FILTER]: The word "{currentWord}" is being filtered with toxicity: {detoxifyResults[i]}')
+                Logger.warn(f'[FILTER]: The word "{currentWord}" is being filtered with toxicity: {detoxifyResults[currentWord]}')
                 jsHandler.replace(currentWord, modifiedWord)
 
         Logger.warn(f'[FILTER]: Filtering has finished.')

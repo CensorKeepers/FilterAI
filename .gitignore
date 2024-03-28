@@ -39,4 +39,5 @@ myenv
 .vscode
 html_files
 text_files
+detoxify_results
 .env
