@@ -1,11 +1,8 @@
 from selenium import webdriver
 from openai import OpenAI
-
 from typing import Union, List
 from dotenv import dotenv_values
-
 import os
-
 from Logger import Logger
 
 
@@ -46,18 +43,46 @@ class SentenceExtractor():
                 limit += 500
 
         for wordList in bucket:
-            content = f'{wordList} içerisinde yazımı yanlış kelimelerin doğrusunu yaz. Sadece cevabı yaz, açıklama yazma. Cevap formatı şu şekilde: <yanlış>:<doğrusu>\n<yanlış>:<doğrusu>. Eğer tüm kelimeler doğruysa cevap olarak sadece ALL:ALL yaz. Düzeltilmiş kelimeler tek kelime içermeli kesinlikle. Boşluk içermemeli. Latin alfabesi içermeyen kelimeleri es geç. Çıktıda < veya > koyma.'
+            content = f'"{wordList}" In this list, write the correct form of any misspelled words. ' \
+                      'Only provide the answer, without any explanation. ' \
+                      'The response format should be as follows: <incorrect>:<correct>\n<incorrect>:<correct>. ' \
+                      'If all words are correct, simply write ALL:ALL as the response. ' \
+                      'Corrected words must contain only a single word without any spaces. ' \
+                      'Skip words that do not contain Latin alphabet characters. ' \
+                      'Do not include < or > in the output.'
+
+                                    
             apiObject = {'role': 'user', 'content': content}
             response = self.__openAiClient.chat.completions.create(model=self.__model, messages=[apiObject])
             # Logger.warn(f'ChatGPT Response: {response.choices[0].message.content}')
-            if response.choices[0].message.content == 'ALL':
+            if response.choices[0].message.content == 'ALL:ALL':
                 continue
+            
+            while ':' not in response.choices[0].message.content:
+                Logger.warn(f'CHATGPT answer is not correct.')
+                content = f'PLEASE USE THIS LOGIC WHEN YOU ARE ANSWERING! \
+                            "{wordList}" In this list, write the correct form of any misspelled words. \
+                            Only provide the answer, without any explanation. \
+                            The response format should be as follows: <incorrect>:<correct>\n<incorrect>:<correct>. \
+                            If all words are correct, simply write ALL:ALL as the response. \
+                            Corrected words must contain only a single word without any spaces. \
+                            Skip words that do not contain Latin alphabet characters. \
+                            Do not include < or > in the output.'
+                                    
+                apiObject = {'role': 'user', 'content': content}
+                response = self.__openAiClient.chat.completions.create(model=self.__model, messages=[apiObject])
+                # Logger.warn(f'ChatGPT Response: {response.choices[0].message.content}')
+                if response.choices[0].message.content == 'ALL:ALL':
+                    continue
 
             wordPairs = response.choices[0].message.content.splitlines()
             for wordPair in wordPairs:
-                currentWord = wordPair[:wordPair.index(':')]
-                correctedWord = wordPair[wordPair.index(':') + 1:]
-                wordList = [w.replace(currentWord, correctedWord) for w in wordList]
-
+                if ':' in wordPair:    
+                    currentWord = wordPair[:wordPair.index(':')]
+                    correctedWord = wordPair[wordPair.index(':') + 1:]
+                    wordList = [w.replace(currentWord, correctedWord) for w in wordList]
+                else:
+                    Logger.warn(f"Expected ':' in word pair but not found. WordPair: {wordPair}")
+        
         answer: List[str] = [word for wordList in bucket for word in wordList]
         return answer

@@ -18,7 +18,6 @@ class TextExtractor:
 
         def split_line_if_needed(line):
             for word in line.split():
-                # print(f"{word}          {predict_detoxify(word)}")
                 yield word + "\n"
 
         lines = []
