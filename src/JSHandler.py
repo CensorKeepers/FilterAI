@@ -29,6 +29,18 @@ class JSHandler():
                 element.id = '{handle}';
                 element.style.display = 'none';
                 document.body.appendChild(element);
+                var socket = new WebSocket('ws://localhost:8787');
+                var isSocketOpen = false;
+                socket.onopen = () => {{isSocketOpen = true;
+                                        socket.send(window.myTabId);}}
+
+                document.addEventListener("visibilitychange", (event) => {{
+                    if (document.visibilityState == "visible") {{
+                        if (isSocketOpen) {{
+                            socket.send(window.myTabId);
+                        }}
+                    }}
+                }});
             ''')
         except JavascriptException as e:
             Logger.warn(f"JavaScript error during embedding unique HTML element: {e}")

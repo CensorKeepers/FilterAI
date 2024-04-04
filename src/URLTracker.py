@@ -58,6 +58,9 @@ class URLTracker:
             for handle in newHandles:
                 self.__driver.switch_to.window(handle)
                 url = self.__driver.current_url
+                if url == 'about:newtab':
+                    self.__driver.get('https://www.google.com.tr')
+                    url = self.__driver.current_url
                 self.__handleUrlPairs[handle] = url
                 self.__jsHandler.initialEmbeddings()
 
