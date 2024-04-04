@@ -1,13 +1,12 @@
-import threading
-import pathlib
-import json
 from selenium import webdriver
 from selenium.webdriver.firefox.service import Service
+import threading
+from time import sleep
+import pathlib
+import json
 
 from Logger import Logger
 from URLTracker import URLTracker
-
-from time import sleep
 
 
 class FirefoxController():
@@ -24,6 +23,22 @@ class FirefoxController():
         self.__shouldTerminate: bool = False
         self.__readAndApplyConfigFile()
         self.__configureController()
+
+    def __connectToBrowser(self) -> bool:
+        serviceArgs = ['--marionette-port', str(self.__port), '--connect-existing']
+        firefoxService = Service(executable_path=self.__webdriverPath, port=3000, service_args=serviceArgs)
+
+        while not self.__shouldTerminate:
+            try:
+                self.__driver = webdriver.Firefox(service=firefoxService)
+                Logger.warn('[FIREFOX]: Connected to Mozilla Firefox!')
+                return True
+
+            except:
+                Logger.warn(f'[FIREFOX]: Could not connect to Mozilla Firefox, retrying...')
+                continue
+
+        return False
 
     def __readAndApplyConfigFile(self) -> None:
         file = open(self.__configPath, mode='r', encoding='utf-8')
@@ -43,21 +58,7 @@ class FirefoxController():
         self.__tabThread.start()
         self.__tabThread.join()
 
-    def __connectToBrowser(self) -> bool:
-        serviceArgs = ['--marionette-port', str(self.__port), '--connect-existing']
-        firefoxService = Service(executable_path=self.__webdriverPath, port=3000, service_args=serviceArgs)
-
-        while not self.__shouldTerminate:
-            try:
-                self.__driver = webdriver.Firefox(service=firefoxService)
-                Logger.warn('Connected to Mozilla Firefox!')
-                return True
-
-            except:
-                Logger.warn(f'Could not connect to Mozilla Firefox, retrying...')
-                continue
-
-        return False
+        self.__driver.quit()
 
     def __handleNewTabs(self) -> None:
         tracker = URLTracker(self.__driver)
@@ -66,6 +67,7 @@ class FirefoxController():
             sleep(0.1)
 
     def start(self) -> None:
+        Logger.warn('[FIREFOX]: Firefox controller has been started.')
         self.__thread.start()
         Logger.warn('Firefox controller has been started.')
 
