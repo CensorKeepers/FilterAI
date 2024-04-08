@@ -22,7 +22,6 @@ class FirefoxController():
         self.__port: int = 0
         self.__configPath: pathlib.Path = pathlib.Path(str(pathlib.Path(__file__).parent.parent) + '/config/FirefoxController.json')
         self.__config: dict = None
-        self.__socket: socket.socket = None
         self.__shouldTerminate: bool = False
         self.__readAndApplyConfigFile()
         self.__configureController()
@@ -64,20 +63,6 @@ class FirefoxController():
         self.__socketThread.join()
 
         self.__driver.quit()
-
-    '''def __handleSocket(self) -> None:
-        self.__socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.__socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.__socket.bind(('127.0.0.1', 8787))
-        self.__socket.listen(20)
-
-        while not self.__shouldTerminate:
-            try:
-                browserSocket, addr = self.__socket.accept()
-                newTabId = browserSocket.recv(90).decode()
-                Logger.warn(f'TAB CHANGED FROM {self.__driver.current_window_handle} to {newTabId}')
-            except:
-                continue'''
 
     def __handleSocket(self) -> None:
         from websocket_server import WebsocketServer
