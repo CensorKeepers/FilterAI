@@ -2,27 +2,31 @@
     "clients": [
         {
             "clientIp": "127.0.0.1",
-            "serverPort": 80000
+            "serverPort": 8000
         },
         {
             "clientIp": "192.168.1.5",
-            "serverPort": 80001
+            "serverPort": 8001
         },
         {
             "clientIp": "192.168.1.55",
-            "serverPort": 80002
+            "serverPort": 8002
         },
         {
             "clientIp": "10.27.5.88",
-            "serverPort": 80003
+            "serverPort": 8003
         },
         {
             "clientIp": "10.80.81.25",
-            "serverPort": 80004
+            "serverPort": 8004
+        },
+        {
+            "clientIp": "10.80.81.22",
+            "serverPort": 8005
         }
     ],
     "loadLLMOnStart": false,
-    "ChatGPT": "enabled",
-    "filterMode": "blur",
+    "ChatGPT": true,
+    "filterMode": "",
     "windowName": "Admin Panel for FilterAI"
 }

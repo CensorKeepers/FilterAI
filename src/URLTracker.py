@@ -1,6 +1,7 @@
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchWindowException
 from typing import Union
+import socket
 
 from Logger import Logger
 from ContentFetcher import ContentFetcher
@@ -16,7 +17,7 @@ class URLTracker:
         self.__lastActiveHandle = self.__driver.current_window_handle
         self.__updateHandlesAndUrls()
 
-    def trackUrls(self):
+    def trackUrls(self, clientSocket: socket.socket):
         try:
             currentHandles = self.__driver.window_handles
             activeHandle = self.__driver.current_window_handle
@@ -41,7 +42,7 @@ class URLTracker:
             Logger.warn(f'[REFRESH]: Tab "{activeHandle}", URL "{self.__handleUrlPairs[activeHandle]}" has been refreshed!')
             self.__jsHandler.initialEmbeddings()
 
-        self.__trackHtmlContentsOfUrls()
+        self.__trackHtmlContentsOfUrls(clientSocket)
 
     def __updateHandlesAndUrls(self):
         try:
@@ -67,10 +68,10 @@ class URLTracker:
         except NoSuchWindowException:
             self.__handleWindowClosedScenario()
 
-    def __trackHtmlContentsOfUrls(self):
+    def __trackHtmlContentsOfUrls(self, clientSocket: socket.socket):
         handlesDict = dict(self.__handleUrlPairs)
         currentHandle = self.__driver.current_window_handle
-        self.__contentFetcher.fetchAndPrintHtmlContents(handlesDict, currentHandle, self.__jsHandler)
+        self.__contentFetcher.fetchAndPrintHtmlContents(handlesDict, currentHandle, self.__jsHandler, clientSocket)
 
     def __handleWindowClosedScenario(self):
         currentHandles = self.__driver.window_handles

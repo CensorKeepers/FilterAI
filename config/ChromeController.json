@@ -1,5 +1,8 @@
 {
-    "ip": "127.0.0.1",
-    "port": 9923,
-    "webdriverPath": "C:/bitirme_496/webdrivers/chromedriver-win64/chromedriver.exe"
+    "remoteIp": "10.3.193.20",
+    "remotePort": 8000,
+    "webSocketServerPort": 8789,
+    "webdriverIp": "127.0.0.1",
+    "webdriverPort": 9923,
+    "webdriverPath": "C:/Users/Yigithan/FilterAI/webdrivers/chromedriver.exe"
 }

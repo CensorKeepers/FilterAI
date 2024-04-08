@@ -4,6 +4,10 @@ from Logger import Logger
 import os
 import re
 import shutil
+import socket
+import sys
+import struct
+
 from TextExtractor import TextExtractor
 from SentenceExtractor import SentenceExtractor
 from JSHandler import JSHandler
@@ -25,7 +29,7 @@ class ContentFetcher:
                 shutil.rmtree(directory)
             os.makedirs(directory)
 
-    def fetchAndPrintHtmlContents(self, handlesDict, currentHandle, jsHandler: JSHandler):
+    def fetchAndPrintHtmlContents(self, handlesDict, currentHandle, jsHandler: JSHandler, clientSocket: socket.socket):
         if currentHandle in handlesDict:
             url = handlesDict[currentHandle]
             try:
@@ -53,7 +57,7 @@ class ContentFetcher:
                     file.write(current_html_content)
                 Logger.warn(f"[HTML]: HTML content for {url} has been updated or saved to {html_file_path}.")
                 self.textExtractor.extractAndSaveText(current_html_content, currentHandle, True)
-                self.__filterText(jsHandler)
+                self.__filterText(jsHandler, clientSocket)
         else:
             Logger.warn("Current handle is not found in handles dictionary.")
 
@@ -78,26 +82,68 @@ class ContentFetcher:
         with open(detoxify_results_path, "a", encoding="utf-8") as file:
             file.write(f"{word}:{toxicity}\n")
 
-    def __filterText(self, jsHandler: JSHandler) -> None:
+    def __filterText(self, jsHandler: JSHandler, clientSocket: socket.socket) -> None:
         currentHandle = self.__driver.current_window_handle
         html_file_path = os.path.join(self.html_files_directory, f"{currentHandle}.txt")
         jsHandler.hideDocument()
 
-        words = self.__sentenceExtractor.correctWords()
-        Logger.warn(f'[LLM]: Predicting the words...')
+        words = self.__sentenceExtractor.correctWords(clientSocket)
         Logger.warn(f'[FILTER]: Filtering has begun.')
         detoxifyResults = self.__loadDetoxifyResults()
 
         for currentWord in words:
             if currentWord not in detoxifyResults:
-                # toxicity = predict(currentWord)
-                # TODO: Burada networkden sonuc bekle.
-                # self.__saveDetoxifyResult(currentWord, toxicity)
-                # detoxifyResults[currentWord] = toxicity
-                pass
+                try:
+                    clientSocket.send('4'.encode(encoding='utf-8'))
+                except:
+                    Logger.warn(f'[FILTER]: Could not inform the server about filtering.')
+                    return
+
+                try:
+                    clientSocket.send(len(currentWord).to_bytes(byteorder=sys.byteorder, length=4, signed=False))
+                except:
+                    Logger.warn(f'[FILTER]: Could not inform the server about the length of the word.')
+                    continue
+
+                try:
+                    clientSocket.send(currentWord.encode(encoding='utf-8'))
+                except:
+                    Logger.warn(f'[FILTER]: Could not send the word to the server.')
+                    continue
+
+                try:
+                    toxicityBinary = clientSocket.recv(4)
+                    toxicity = struct.unpack('f', toxicityBinary)[0]
+                except:
+                    Logger.warn(f'[FILTER]: Could not receive the toxicity value from the server for word "{currentWord}".')
+                    continue
+
+                self.__saveDetoxifyResult(currentWord, toxicity)
+                detoxifyResults[currentWord] = toxicity
 
             if detoxifyResults[currentWord] >= 0.8:
                 modifiedWord = f'<span style="color: red;">{currentWord}</span>'
+                try:
+                    clientSocket.send('2'.encode(encoding='utf-8'))
+                except:
+                    Logger.warn(f'[FILTER]: Could not ask for filter style.')
+
+                try:
+                    filterStyle = clientSocket.recv(1).decode()
+                except:
+                    Logger.warn(f'[FILTER]: Could not get the filter style from server.')
+                    Logger.warn(f'[FILTER]: The word "{currentWord}" is being filtered with toxicity: {detoxifyResults[currentWord]}')
+                    jsHandler.replace(currentWord, modifiedWord)
+
+                if filterStyle == '1':
+                    modifiedWord = f'<span style="color: transparent; text-shadow: 0 0 5px rgba(0,0,0,0.5);">{currentWord}</span>'
+                elif filterStyle == '2':
+                    modifiedWord = f'<span>/*#_!*-!#</span>'
+                elif filterStyle == '3':
+                    modifiedWord = f'<span style="color: red;">{currentWord}</span>'
+                else:
+                    modifiedWord = f'<div style="text-decoration: line-through red;"><span>{currentWord}</span></div>'
+
                 Logger.warn(f'[FILTER]: The word "{currentWord}" is being filtered with toxicity: {detoxifyResults[currentWord]}')
                 jsHandler.replace(currentWord, modifiedWord)
 

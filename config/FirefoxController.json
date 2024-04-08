@@ -1,5 +1,8 @@
 {
-    "ip": "127.0.0.1",
-    "port": 2828,
-    "webdriverPath": "C:/bitirme_496/webdrivers/geckodriver.exe"
+    "remoteIp": "10.3.193.20",
+    "remotePort": 8000,
+    "webSocketServerPort": 8787,
+    "webdriverIp": "127.0.0.1",
+    "webdriverPort": 2828,
+    "webdriverPath": "C:/Users/Yigithan/FilterAI/webdrivers/geckodriver.exe"
 }
