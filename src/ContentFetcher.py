@@ -7,7 +7,6 @@ import shutil
 from TextExtractor import TextExtractor
 from SentenceExtractor import SentenceExtractor
 from JSHandler import JSHandler
-from DetoxifySentences import predict
 
 
 class ContentFetcher:
@@ -91,10 +90,11 @@ class ContentFetcher:
 
         for currentWord in words:
             if currentWord not in detoxifyResults:
-                toxicity = predict(currentWord)
-                # Logger.warn(f"------------------------------------------ YENİ KELİME KAYDEDİLDİ {currentWord} -> {toxicity}")
-                self.__saveDetoxifyResult(currentWord, toxicity)
-                detoxifyResults[currentWord] = toxicity
+                # toxicity = predict(currentWord)
+                # TODO: Burada networkden sonuc bekle.
+                # self.__saveDetoxifyResult(currentWord, toxicity)
+                # detoxifyResults[currentWord] = toxicity
+                pass
 
             if detoxifyResults[currentWord] >= 0.8:
                 modifiedWord = f'<span style="color: red;">{currentWord}</span>'
