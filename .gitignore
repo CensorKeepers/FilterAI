@@ -30,3 +30,14 @@
 *.exe
 *.out
 *.app
+
+.venv
+__pycache__
+webdrivers
+*.log
+myenv
+.vscode
+html_files
+text_files
+detoxify_results
+.env
