@@ -54,10 +54,8 @@ class TextExtractor:
             with open(text_file_path, 'r', encoding='utf-8') as text_file:
                 text_content = text_file.read()
             if (text_content.strip() == refreshedText.strip()):
-                # Logger.warn("AYNI SAYFADAYIZ HİÇBİR SIKINTI YOK")
                 return False
             else:
-                # Logger.warn("CİDDEN DEĞİŞİKLİK OLDU ------------------------")
                 return True
         except FileNotFoundError:
             Logger.warn("One of the files does not exist.")

@@ -2,3 +2,5 @@ selenium==4.17.2
 beautifulsoup4==4.12.3
 python-dotenv==1.0.1
 openai==1.14.0
+detoxify==0.5.2
+websocket_server==0.6.4

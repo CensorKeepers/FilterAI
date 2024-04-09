@@ -21,9 +21,15 @@ class SentenceExtractor():
     def correctWords(self, clientSocket: socket.socket) -> List[str]:
         try:
             clientSocket.send('1'.encode(encoding='utf-8'))
-            answer = clientSocket.recv(1).decode()
+            answer = self.__receiveBytes(clientSocket, 1).decode()
             if answer == '1':
-                return
+                currentHandle = self.__driver.current_window_handle
+                textFilesPath = os.path.join(self.__textFilesDirectory, f"{currentHandle}.txt")
+                file = open(textFilesPath, "r", encoding="utf-8")
+                text = file.read()
+                file.close()
+                words: List[str] = list(filter(None, text.splitlines()))
+                return words
         except:
             Logger.warn(f'[CHATGPT]: ChatGPT has been skipped.')
             return
@@ -35,13 +41,13 @@ class SentenceExtractor():
             return
 
         try:
-            keyLength = int.from_bytes(clientSocket.recv(4), byteorder=sys.byteorder, signed=False)
+            keyLength = int.from_bytes(self.__receiveBytes(clientSocket, 4), byteorder=sys.byteorder, signed=False)
         except:
             Logger.warn(f'[CHATGPT]: Could not receive key length from the server.')
             return
 
         try:
-            key = clientSocket.recv(keyLength).decode()
+            key = self.__receiveBytes(clientSocket, keyLength).decode()
         except:
             Logger.warn(f'[CHATGPT]: Could not receive the API key from the server.')
             return
@@ -58,6 +64,15 @@ class SentenceExtractor():
         correctedWords = self.__askChatGPT(words)
         Logger.warn('[CHATGPT]: Sentence extraction has finished.')
         return correctedWords
+
+    def __receiveBytes(self, socket: socket.socket, count: int) -> bytes:
+        bytesReceived = 0
+        buffer = b''
+        while bytesReceived < count:
+            bytes = socket.recv(count - bytesReceived)
+            buffer += bytes
+            bytesReceived += len(bytes)
+        return buffer
 
     def __askChatGPT(self, words: List[str]) -> List[str]:
         bucket: List[List[str]] = []

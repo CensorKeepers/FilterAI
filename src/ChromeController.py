@@ -1,6 +1,7 @@
 import threading
 import pathlib
 import json
+import socket
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
@@ -15,14 +16,13 @@ class ChromeController():
     def __init__(self) -> 'ChromeController':
         self.__thread = threading.Thread(target=self.__process, args=())
         self.__tabThread = threading.Thread(target=self.__handleNewTabs, args=())
-        self.__webSocketThread = threading.Thread(target=self.__handleWebSocket, args=())
         self.__driver: webdriver.Chrome = None
         self.__webdriverPath: str = ''
         self.__webdriverIp: str = ''
         self.__webdriverPort: int = 0
         self.__remoteIp: str = None
         self.__remotePort: int = 0
-        self.__webSocketServerPort: int = 0
+        self.__socket: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.__configPath: pathlib.Path = pathlib.Path(str(pathlib.Path(__file__).parent.parent) + '/config/ChromeController.json')
         self.__config: dict = None
         self.__shouldTerminate: bool = False
@@ -55,31 +55,25 @@ class ChromeController():
         self.__webdriverPath = self.__config['webdriverPath']
         self.__remoteIp = self.__config['remoteIp']
         self.__remotePort = self.__config['remotePort']
-        self.__webSocketServerPort = self.__config['webSocketServerPort']
 
     def __process(self) -> None:
         if not self.__connectToBrowser():
             return
+
+        while True:
+            try:
+                self.__socket.connect((self.__remoteIp, self.__remotePort))
+                Logger.warn(f'[CHROME]: Connected to remote server {self.__remoteIp}:{self.__remotePort}.')
+                break
+            except:
+                Logger.warn(f'[CHROME]: Could not connect to the remote server. Retrying...')
+                continue
 
         self.__driver.get('https://www.google.com.tr')
         self.__tabThread.start()
         self.__tabThread.join()
 
         self.__driver.quit()
-
-    def __handleWebSocket(self) -> None:
-        from websocket_server import WebsocketServer
-
-        def new_client(client, server):
-            Logger.warn("[WEBSOCKET]: New client connected!")
-
-        def message_received(client, server, message):
-            Logger.warn(f"[WEBSOCKET]: Received: {message}")
-
-        server = WebsocketServer(port=self.__webSocketServerPort)
-        server.set_fn_new_client(new_client)
-        server.set_fn_message_received(message_received)
-        server.run_forever()
 
     def __handleNewTabs(self) -> None:
         tracker = URLTracker(self.__driver)

@@ -1,12 +1,10 @@
 from selenium import webdriver
-from typing import Union, Dict, List
+from typing import Union
 from Logger import Logger
 import os
-import re
 import shutil
 import socket
-import sys
-import struct
+from DetoxifySentences import predict
 
 from TextExtractor import TextExtractor
 from SentenceExtractor import SentenceExtractor
@@ -82,6 +80,15 @@ class ContentFetcher:
         with open(detoxify_results_path, "a", encoding="utf-8") as file:
             file.write(f"{word}:{toxicity}\n")
 
+    def __receiveBytes(self, socket: socket.socket, count: int) -> bytes:
+        bytesReceived = 0
+        buffer = b''
+        while bytesReceived < count:
+            bytes = socket.recv(count - bytesReceived)
+            buffer += bytes
+            bytesReceived += len(bytes)
+        return buffer
+
     def __filterText(self, jsHandler: JSHandler, clientSocket: socket.socket) -> None:
         currentHandle = self.__driver.current_window_handle
         html_file_path = os.path.join(self.html_files_directory, f"{currentHandle}.txt")
@@ -93,31 +100,7 @@ class ContentFetcher:
 
         for currentWord in words:
             if currentWord not in detoxifyResults:
-                try:
-                    clientSocket.send('4'.encode(encoding='utf-8'))
-                except:
-                    Logger.warn(f'[FILTER]: Could not inform the server about filtering.')
-                    return
-
-                try:
-                    clientSocket.send(len(currentWord).to_bytes(byteorder=sys.byteorder, length=4, signed=False))
-                except:
-                    Logger.warn(f'[FILTER]: Could not inform the server about the length of the word.')
-                    continue
-
-                try:
-                    clientSocket.send(currentWord.encode(encoding='utf-8'))
-                except:
-                    Logger.warn(f'[FILTER]: Could not send the word to the server.')
-                    continue
-
-                try:
-                    toxicityBinary = clientSocket.recv(4)
-                    toxicity = struct.unpack('f', toxicityBinary)[0]
-                except:
-                    Logger.warn(f'[FILTER]: Could not receive the toxicity value from the server for word "{currentWord}".')
-                    continue
-
+                toxicity = predict(currentWord)
                 self.__saveDetoxifyResult(currentWord, toxicity)
                 detoxifyResults[currentWord] = toxicity
 
@@ -129,7 +112,7 @@ class ContentFetcher:
                     Logger.warn(f'[FILTER]: Could not ask for filter style.')
 
                 try:
-                    filterStyle = clientSocket.recv(1).decode()
+                    filterStyle = self.__receiveBytes(clientSocket, 1).decode()
                 except:
                     Logger.warn(f'[FILTER]: Could not get the filter style from server.')
                     Logger.warn(f'[FILTER]: The word "{currentWord}" is being filtered with toxicity: {detoxifyResults[currentWord]}')

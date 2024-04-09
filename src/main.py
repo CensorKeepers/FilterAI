@@ -5,6 +5,7 @@ from Logger import Logger
 from ChromeController import ChromeController
 from EdgeController import EdgeController
 from FirefoxController import FirefoxController
+from DetoxifySentences import load_model_detoxify
 import json
 import pathlib
 import signal
@@ -22,6 +23,7 @@ def signalHandler(sig, frame):
 
 
 signal.signal(signal.SIGINT, signalHandler)
+load_model_detoxify()
 
 shouldTerminate: bool = False
 

@@ -25,7 +25,6 @@
             "serverPort": 8005
         }
     ],
-    "loadLLMOnStart": false,
     "ChatGPT": true,
     "filterMode": "",
     "windowName": "Admin Panel for FilterAI"

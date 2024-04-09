@@ -29,18 +29,6 @@ class JSHandler():
                 element.id = '{handle}';
                 element.style.display = 'none';
                 document.body.appendChild(element);
-                var socket = new WebSocket('ws://localhost:8787');
-                var isSocketOpen = false;
-                socket.onopen = () => {{isSocketOpen = true;
-                                        socket.send(window.myTabId);}}
-
-                document.addEventListener("visibilitychange", (event) => {{
-                    if (document.visibilityState == "visible") {{
-                        if (isSocketOpen) {{
-                            socket.send(window.myTabId);
-                        }}
-                    }}
-                }});
             ''')
         except JavascriptException as e:
             Logger.warn(f"JavaScript error during embedding unique HTML element: {e}")
@@ -52,12 +40,6 @@ class JSHandler():
         except JavascriptException as e:
             Logger.warn(f"JavaScript error during page refresh check: {e}")
             return False  # Assuming the page is not refreshed if JavaScript execution fails
-
-    def restoreFilteredContent(self, body: str) -> None:
-        try:
-            self.__driver.execute_script(f'document.body.innerHTML = arguments[0];', body)
-        except JavascriptException as e:
-            Logger.warn(f"JavaScript error during restoring filtered content: {e}")
 
     def hideDocument(self) -> None:
         try:

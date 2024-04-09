@@ -6,12 +6,11 @@ from tkinter import font
 import json
 import pathlib
 import socket
-from DetoxifySentences import load_model_detoxify, predict
 from enum import StrEnum
 from typing import List, Dict
 import threading
 import sys
-import struct
+import os
 from time import sleep
 
 
@@ -95,15 +94,12 @@ class AdminPanel():
         self.__shouldTerminate: bool = False
         self.__isStopClientsCliecked: bool = False
         self.__isStartClientsCliecked: bool = False
-        self.__isLLMLoaded: bool = False
-        self.__shouldLoadLLMOnStart: bool = False
         self.__isChatGPTEnabled: bool = False
         self.__filterStyle: FilterStyle = None
         self.__openAiApiKey: str = None
         self.__stringVar: tk.StringVar = None
         self.__root: tk.Tk = None
         self.__servicesStatusLabel: tk.Label = None
-        self.__LLMStatusLabel: tk.Label = None
         self.__ChatGPTStatusLabel: tk.Label = None
         self.__filterStyleStatusLabel: tk.Label = None
         self.__readAndApplyConfigFile()
@@ -117,7 +113,6 @@ class AdminPanel():
         file.close()
 
     def __configureAdminPanel(self) -> None:
-        self.__shouldLoadLLMOnStart = self.__config['loadLLMOnStart']
         self.__isChatGPTEnabled = self.__config['ChatGPT']
         self.__filterStyle = self.__config['filterMode']
 
@@ -144,6 +139,15 @@ class AdminPanel():
             thread = threading.Thread(target=self.__handleClients, args=(server,))
             thread.start()
             self.__serverThreads.append(thread)
+
+    def __receiveBytes(self, socket: socket.socket, count: int) -> bytes:
+        bytesReceived = 0
+        buffer = b''
+        while bytesReceived < count:
+            bytes = socket.recv(count - bytesReceived)
+            buffer += bytes
+            bytesReceived += len(bytes)
+        return buffer
 
     def __handleClients(self, server: Server) -> None:
         clients: List[Client] = self.__connectionDict[server]
@@ -196,7 +200,7 @@ class AdminPanel():
     def __handleControllerClient(self, server: Server, clientSocket: socket.socket) -> None:
         while not self.__shouldTerminate:
             try:
-                message = clientSocket.recv(1).decode()
+                message = self.__receiveBytes(clientSocket, 1).decode()
                 print(f'[ADMIN]: Message received: "{message}"')
             except:
                 continue
@@ -231,7 +235,6 @@ class AdminPanel():
             elif message == '3':    # Asking for API Key
                 try:
                     clientSocket.send(len(self.__openAiApiKey).to_bytes(byteorder=sys.byteorder, length=4, signed=False))
-                    print('[ADMIN]: Length of the key is sent.')
                 except:
                     print(f'[ADMIN]: Could not send the key length to the client.')
                     continue
@@ -240,32 +243,6 @@ class AdminPanel():
                     clientSocket.send(self.__openAiApiKey.encode(encoding='utf-8'))
                 except:
                     print(f'[ADMIN]: Could not send the API key to client.')
-                    continue
-
-            elif message == '4':  # words are incoming
-                try:
-                    wordLength = int.from_bytes(clientSocket.recv(4), byteorder=sys.byteorder, signed=False)
-                    print(f'[ADMIN]: Word length: {wordLength}')
-                except:
-                    print(f'[ADMIN]: Could not get the world length from client.')
-                    continue
-
-                try:
-                    word = clientSocket.recv(wordLength).decode()
-                    print(f'[ADMIN]: Word: {word} and length: {len(word)}')
-                except:
-                    print(f'[ADMIN]: Could not get the word from client.')
-                    continue
-
-                if self.__isLLMLoaded:
-                    toxicity = predict(word)
-                else:
-                    toxicity = 0.0
-
-                try:
-                    clientSocket.send(struct.pack('f', toxicity))
-                except:
-                    print(f'[ADMIN]: Could not send the toxicity value to the client.')
                     continue
 
             sleep(0)
@@ -324,17 +301,8 @@ class AdminPanel():
         self.__isChatGPTEnabled = False
         self.__ChatGPTStatusLabel.config(text='Disabled', fg='red')
 
-    def __loadLanguageModel(self) -> None:
-        if self.__isLLMLoaded:
-            return
-
-        self.__LLMStatusLabel.config(text='Loading', fg='yellow')
-        load_model_detoxify()
-        self.__LLMStatusLabel.config(text='Running', fg='green')
-        self.__isLLMLoaded = True
-
     def __changeSettingsFile(self) -> None:
-        pass
+        os.startfile(str(self.__configPath))
 
     def __setFilterStyle(self, button: tk.Button) -> None:
         style = button.cget('text')
@@ -432,10 +400,6 @@ class AdminPanel():
         label1.grid(row=0, column=0, padx=20, pady=10, sticky="w")
         self.__servicesStatusLabel = tk.Label(topPanel, text="Not Running", fg="red", bg="black", font=labelFont)
         self.__servicesStatusLabel.grid(row=0, column=1, padx=10, pady=20)
-        label2 = tk.Label(topPanel, text="Language Model:", fg="white", bg="black", font=labelFont)
-        label2.grid(row=0, column=2, padx=20, pady=10, sticky="w")
-        self.__LLMStatusLabel = tk.Label(topPanel, text="Not Running", fg="red", bg="black", font=labelFont)
-        self.__LLMStatusLabel.grid(row=0, column=3, padx=10, pady=20)
         label3 = tk.Label(topPanel, text="ChatGPT:", fg="white", bg="black", font=labelFont)
         label3.grid(row=0, column=4, padx=20, pady=10, sticky="w")
         self.__ChatGPTStatusLabel = tk.Label(topPanel, text="Disabled", fg="red", bg="black", font=labelFont)
@@ -472,8 +436,6 @@ class AdminPanel():
         button7.grid(row=2, column=0, padx=buttonPadX, pady=buttonPadY, sticky="we")
         button8 = tk.Button(bottomPanel, text='Change Settings', bg='gray', width=buttonWidth, height=buttonHeight, command=self.__changeSettingsFile)
         button8.grid(row=2, column=1, padx=buttonPadX, pady=buttonPadY, sticky="we")
-        button9 = tk.Button(bottomPanel, text='Load Language Model', bg='gray', width=buttonWidth, height=buttonHeight, command=self.__loadLanguageModel)
-        button9.grid(row=2, column=2, padx=buttonPadX, pady=buttonPadY, sticky="we")
 
         label5 = tk.Label(bottomPanel, text="Filter Style:", fg="white", bg="#303030", font=labelFont)
         label5.grid(row=3, column=0, padx=20, pady=60, sticky="w")

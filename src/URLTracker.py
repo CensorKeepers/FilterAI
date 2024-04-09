@@ -27,10 +27,10 @@ class URLTracker:
         if set(currentHandles) != set(self.__handleUrlPairs):
             self.__updateHandlesAndUrls()
 
-        # if activeHandle != self.__lastActiveHandle:
-        #    Logger.warn(f"Kullanici {self.__lastActiveHandle} sekmesinden {activeHandle} sekmesine gecti")
-        #    self.__lastActiveHandle = activeHandle
-        #    self.__driver.switch_to.window(activeHandle)
+        if activeHandle != self.__lastActiveHandle:
+            Logger.warn(f"Kullanici {self.__lastActiveHandle} sekmesinden {activeHandle} sekmesine gecti")
+            self.__lastActiveHandle = activeHandle
+            self.__driver.switch_to.window(activeHandle)
 
         current_url = self.__driver.current_url
         if self.__handleUrlPairs[activeHandle] != current_url:
