@@ -1,13 +1,14 @@
 from selenium import webdriver
-from typing import Union, Dict, List
+from typing import Union
 from Logger import Logger
 import os
-import re
 import shutil
+import socket
+from DetoxifySentences import predict
+
 from TextExtractor import TextExtractor
 from SentenceExtractor import SentenceExtractor
 from JSHandler import JSHandler
-from DetoxifySentences import predict
 
 
 class ContentFetcher:
@@ -26,7 +27,7 @@ class ContentFetcher:
                 shutil.rmtree(directory)
             os.makedirs(directory)
 
-    def fetchAndPrintHtmlContents(self, handlesDict, currentHandle, jsHandler: JSHandler):
+    def fetchAndPrintHtmlContents(self, handlesDict, currentHandle, jsHandler: JSHandler, clientSocket: socket.socket):
         if currentHandle in handlesDict:
             url = handlesDict[currentHandle]
             try:
@@ -54,51 +55,78 @@ class ContentFetcher:
                     file.write(current_html_content)
                 Logger.warn(f"[HTML]: HTML content for {url} has been updated or saved to {html_file_path}.")
                 self.textExtractor.extractAndSaveText(current_html_content, currentHandle, True)
-                self.__filterText(jsHandler)
+                self.__filterText(jsHandler, clientSocket)
         else:
             Logger.warn("Current handle is not found in handles dictionary.")
-            
+
     def __loadDetoxifyResults(self):
         detoxify_results_path = os.path.join(self.detoxify_result_directory, "detoxify_results.txt")
         if not os.path.exists(detoxify_results_path):
             return {}
-        
+
         with open(detoxify_results_path, "r", encoding="utf-8") as file:
             lines = file.readlines()
-        
+
         results = {}
         for line in lines:
             parts = line.strip().split(":")
             if len(parts) == 2:
                 results[parts[0]] = float(parts[1])
-        
+
         return results
-    
+
     def __saveDetoxifyResult(self, word, toxicity):
         detoxify_results_path = os.path.join(self.detoxify_result_directory, "detoxify_results.txt")
         with open(detoxify_results_path, "a", encoding="utf-8") as file:
             file.write(f"{word}:{toxicity}\n")
-            
-    
-    def __filterText(self, jsHandler: JSHandler) -> None:
+
+    def __receiveBytes(self, socket: socket.socket, count: int) -> bytes:
+        bytesReceived = 0
+        buffer = b''
+        while bytesReceived < count:
+            bytes = socket.recv(count - bytesReceived)
+            buffer += bytes
+            bytesReceived += len(bytes)
+        return buffer
+
+    def __filterText(self, jsHandler: JSHandler, clientSocket: socket.socket) -> None:
         currentHandle = self.__driver.current_window_handle
         html_file_path = os.path.join(self.html_files_directory, f"{currentHandle}.txt")
         jsHandler.hideDocument()
-        
-        words = self.__sentenceExtractor.correctWords()
-        Logger.warn(f'[LLM]: Predicting the words...')
-        Logger.warn(f'[FILTER]: Filtering has begun.') 
+
+        words = self.__sentenceExtractor.correctWords(clientSocket)
+        Logger.warn(f'[FILTER]: Filtering has begun.')
         detoxifyResults = self.__loadDetoxifyResults()
 
         for currentWord in words:
             if currentWord not in detoxifyResults:
-                toxicity = predict(currentWord)  
-                #Logger.warn(f"------------------------------------------ YENİ KELİME KAYDEDİLDİ {currentWord} -> {toxicity}")
+                toxicity = predict(currentWord)
                 self.__saveDetoxifyResult(currentWord, toxicity)
-                detoxifyResults[currentWord] = toxicity  
+                detoxifyResults[currentWord] = toxicity
 
             if detoxifyResults[currentWord] >= 0.8:
                 modifiedWord = f'<span style="color: red;">{currentWord}</span>'
+                try:
+                    clientSocket.send('2'.encode(encoding='utf-8'))
+                except:
+                    Logger.warn(f'[FILTER]: Could not ask for filter style.')
+
+                try:
+                    filterStyle = self.__receiveBytes(clientSocket, 1).decode()
+                except:
+                    Logger.warn(f'[FILTER]: Could not get the filter style from server.')
+                    Logger.warn(f'[FILTER]: The word "{currentWord}" is being filtered with toxicity: {detoxifyResults[currentWord]}')
+                    jsHandler.replace(currentWord, modifiedWord)
+
+                if filterStyle == '1':
+                    modifiedWord = f'<span style="color: transparent; text-shadow: 0 0 5px rgba(0,0,0,0.5);">{currentWord}</span>'
+                elif filterStyle == '2':
+                    modifiedWord = f'<span>/*#_!*-!#</span>'
+                elif filterStyle == '3':
+                    modifiedWord = f'<span style="color: red;">{currentWord}</span>'
+                else:
+                    modifiedWord = f'<div style="text-decoration: line-through red;"><span>{currentWord}</span></div>'
+
                 Logger.warn(f'[FILTER]: The word "{currentWord}" is being filtered with toxicity: {detoxifyResults[currentWord]}')
                 jsHandler.replace(currentWord, modifiedWord)
 

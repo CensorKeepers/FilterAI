@@ -4,6 +4,7 @@ import threading
 from time import sleep
 import pathlib
 import json
+import socket
 
 from Logger import Logger
 from URLTracker import URLTracker
@@ -16,8 +17,11 @@ class FirefoxController():
         self.__tabThread = threading.Thread(target=self.__handleNewTabs, args=())
         self.__driver: webdriver.Firefox = None
         self.__webdriverPath: str = ''
-        self.__ip: str = ''
-        self.__port: int = 0
+        self.__webdriverIp: str = ''
+        self.__webdriverPort: int = 0
+        self.__remoteIp: str = None
+        self.__remotePort: int = 0
+        self.__socket: socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.__configPath: pathlib.Path = pathlib.Path(str(pathlib.Path(__file__).parent.parent) + '/config/FirefoxController.json')
         self.__config: dict = None
         self.__shouldTerminate: bool = False
@@ -25,7 +29,7 @@ class FirefoxController():
         self.__configureController()
 
     def __connectToBrowser(self) -> bool:
-        serviceArgs = ['--marionette-port', str(self.__port), '--connect-existing']
+        serviceArgs = ['--marionette-port', str(self.__webdriverPort), '--connect-existing']
         firefoxService = Service(executable_path=self.__webdriverPath, port=3000, service_args=serviceArgs)
 
         while not self.__shouldTerminate:
@@ -46,13 +50,24 @@ class FirefoxController():
         file.close()
 
     def __configureController(self) -> None:
-        self.__ip = self.__config['ip']
-        self.__port = self.__config['port']
+        self.__webdriverIp = self.__config['webdriverIp']
+        self.__webdriverPort = self.__config['webdriverPort']
         self.__webdriverPath = self.__config['webdriverPath']
+        self.__remoteIp = self.__config['remoteIp']
+        self.__remotePort = self.__config['remotePort']
 
     def __process(self) -> None:
         if not self.__connectToBrowser():
             return
+
+        while True:
+            try:
+                self.__socket.connect((self.__remoteIp, self.__remotePort))
+                Logger.warn(f'[FIREFOX]: Connected to remote server {self.__remoteIp}:{self.__remotePort}.')
+                break
+            except:
+                Logger.warn(f'[FIREFOX]: Could not connect to the remote server. Retrying...')
+                continue
 
         self.__driver.get('https://www.google.com.tr')
         self.__tabThread.start()
@@ -63,12 +78,12 @@ class FirefoxController():
     def __handleNewTabs(self) -> None:
         tracker = URLTracker(self.__driver)
         while not self.__shouldTerminate:
-            tracker.trackUrls()
-            sleep(0.1)
+            tracker.trackUrls(self.__socket)
+            sleep(0)
 
     def start(self) -> None:
-        Logger.warn('[FIREFOX]: Firefox controller has been started.')
         self.__thread.start()
+        Logger.warn('[FIREFOX]: Firefox controller has been started.')
 
     def join(self) -> None:
         self.__thread.join()

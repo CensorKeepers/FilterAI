@@ -7,6 +7,7 @@ from selenium.common.exceptions import JavascriptException
 from typing import List, Union
 from Logger import Logger
 
+
 class JSHandler():
 
     def __init__(self, driver: Union[webdriver.Firefox, webdriver.Edge, webdriver.Chrome]) -> 'JSHandler':
@@ -39,25 +40,19 @@ class JSHandler():
         except JavascriptException as e:
             Logger.warn(f"JavaScript error during page refresh check: {e}")
             return False  # Assuming the page is not refreshed if JavaScript execution fails
-        
-    def restoreFilteredContent(self, body: str) -> None:
-        try:
-            self.__driver.execute_script(f'document.body.innerHTML = arguments[0];', body)
-        except JavascriptException as e:
-            Logger.warn(f"JavaScript error during restoring filtered content: {e}")
-            
+
     def hideDocument(self) -> None:
         try:
             self.__driver.execute_script(f'document.body.style.visibility = "hidden";')
         except JavascriptException as e:
             Logger.warn(f"JavaScript error during hiding document: {e}")
-            
+
     def showDocument(self) -> None:
         try:
             self.__driver.execute_script(f'document.body.style.visibility = "visible";')
         except JavascriptException as e:
             Logger.warn(f"JavaScript error during showing document: {e}")
-            
+
     def replace(self, old: str, new: str) -> None:
         try:
             self.__driver.execute_script('''
@@ -83,4 +78,4 @@ class JSHandler():
                 replaceInText(document.body, arguments[0], arguments[1]);
             ''', old, new)
         except JavascriptException as e:
-            print(f"JavaScript error during replacement: {e}")        
+            print(f"JavaScript error during replacement: {e}")

@@ -1,0 +1,31 @@
+{
+    "clients": [
+        {
+            "clientIp": "127.0.0.1",
+            "serverPort": 8000
+        },
+        {
+            "clientIp": "192.168.1.5",
+            "serverPort": 8001
+        },
+        {
+            "clientIp": "192.168.1.55",
+            "serverPort": 8002
+        },
+        {
+            "clientIp": "10.27.5.88",
+            "serverPort": 8003
+        },
+        {
+            "clientIp": "10.80.81.25",
+            "serverPort": 8004
+        },
+        {
+            "clientIp": "10.80.81.22",
+            "serverPort": 8005
+        }
+    ],
+    "ChatGPT": true,
+    "filterMode": "",
+    "windowName": "Admin Panel for FilterAI"
+}
